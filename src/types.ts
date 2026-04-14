@@ -10,6 +10,7 @@ export interface Incident {
   createdAt: string;
   description: string;
   system: string;
+  role: 'Cloud Engineer' | 'DevOps' | 'Application Support Engineer';
   logs: LogEntry[];
   timeline: TimelineEvent[];
 }
@@ -61,4 +62,13 @@ export interface FileSystemItem {
   type: 'file' | 'dir';
   content?: string;
   children?: Record<string, FileSystemItem>;
+}
+
+export interface Tutorial {
+  id: string;
+  title: string;
+  category: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  description: string;
+  steps: { title: string; content: string }[];
 }

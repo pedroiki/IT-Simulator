@@ -70,8 +70,27 @@ import {
   Truck,
   Leaf,
   Eye,
-  Users
+  Users,
+  Smartphone,
+  Monitor,
+  CreditCard,
+  ShoppingCart,
+  Share2
 } from 'lucide-react';
+import { 
+  ReactFlow, 
+  Background, 
+  Controls, 
+  MiniMap, 
+  addEdge, 
+  useNodesState, 
+  useEdgesState,
+  Connection,
+  Edge,
+  Node,
+  Panel
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 import { motion, AnimatePresence } from 'motion/react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -80,6 +99,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { 
   LineChart, 
   Line, 
@@ -93,8 +117,8 @@ import {
 } from 'recharts';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { mockIncidents, systemHealth, mockDatabases, mockQueries, initialFileSystem, portalProducts, portalClients, portalCompanies } from './mockData';
-import { Incident, Priority, Status, DatabaseInstance, FileSystemItem } from './types';
+import { mockIncidents, systemHealth, mockDatabases, mockQueries, initialFileSystem, portalProducts, portalClients, portalCompanies, mockTutorials } from './mockData';
+import { Incident, Priority, Status, DatabaseInstance, FileSystemItem, Tutorial } from './types';
 import { cn } from '@/lib/utils';
 
 // --- Components ---
@@ -250,6 +274,14 @@ const LinuxTerminal = () => {
   const [currentPath, setCurrentPath] = useState<string[]>(['home', 'admin']);
   const [fs, setFs] = useState<FileSystemItem>(initialFileSystem);
   const [cmdHistory, setCmdHistory] = useState<string[]>([]);
+  const [terminalStyle, setTerminalStyle] = useState({
+    bg: '#000000',
+    color: '#00ff00',
+    fontSize: 14,
+    fontFamily: 'JetBrains Mono, monospace'
+  });
+  const [isVimMode, setIsVimMode] = useState(false);
+  const [vimFile, setVimFile] = useState<{ name: string, content: string } | null>(null);
 
   const getDir = (path: string[], currentFs: FileSystemItem) => {
     let curr = currentFs;
@@ -263,6 +295,17 @@ const LinuxTerminal = () => {
     return curr;
   };
 
+  const updateFs = (path: string[], newItem: FileSystemItem) => {
+    const newFs = JSON.parse(JSON.stringify(fs));
+    let curr = newFs;
+    for (const p of path) {
+      curr = curr.children[p];
+    }
+    if (!curr.children) curr.children = {};
+    curr.children[newItem.name] = newItem;
+    setFs(newFs);
+  };
+
   const handleCommand = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedInput = input.trim();
@@ -274,17 +317,6 @@ const LinuxTerminal = () => {
 
     let output = '';
     let type: 'output' | 'error' = 'output';
-
-    const updateFs = (path: string[], newItem: FileSystemItem) => {
-      const newFs = JSON.parse(JSON.stringify(fs));
-      let curr = newFs;
-      for (const p of path) {
-        curr = curr.children[p];
-      }
-      if (!curr.children) curr.children = {};
-      curr.children[newItem.name] = newItem;
-      setFs(newFs);
-    };
 
     const removeItem = (path: string[], itemName: string) => {
       const newFs = JSON.parse(JSON.stringify(fs));
@@ -302,7 +334,26 @@ const LinuxTerminal = () => {
 
     switch (cmd) {
       case 'help':
-        output = 'Available commands: ls, cd, pwd, cat, mkdir, touch, rm, echo, grep, clear, help, whoami, date, uptime, ps, top, history';
+        output = 'Available commands: ls, cd, pwd, cat, mkdir, touch, rm, echo, grep, clear, help, whoami, date, uptime, ps, top, history, vim';
+        break;
+      case 'vim':
+        const vFile = args[0];
+        if (!vFile) {
+          output = 'usage: vim [file]';
+          type = 'error';
+        } else {
+          const dir = getDir(currentPath, fs);
+          const file = dir?.children?.[vFile];
+          if (file && file.type === 'dir') {
+            output = `vim: ${vFile}: Is a directory`;
+            type = 'error';
+          } else {
+            setIsVimMode(true);
+            setVimFile({ name: vFile, content: file?.content || '' });
+            setInput('');
+            return;
+          }
+        }
         break;
       case 'pwd':
         output = '/' + currentPath.join('/');
@@ -450,8 +501,53 @@ const LinuxTerminal = () => {
     setInput('');
   };
 
+  const handleVimSave = () => {
+    if (vimFile) {
+      updateFs(currentPath, { name: vimFile.name, type: 'file', content: vimFile.content });
+      setIsVimMode(false);
+      setHistory([...history, { type: 'output', text: `vim: ${vimFile.name} saved and closed` }]);
+      setVimFile(null);
+    }
+  };
+
+  const handleVimQuit = () => {
+    setIsVimMode(false);
+    setVimFile(null);
+  };
+
+  if (isVimMode && vimFile) {
+    return (
+      <div className="bg-[#1e1e1e] rounded-xl border border-slate-800 font-mono text-sm h-full flex flex-col overflow-hidden shadow-2xl">
+        <div className="bg-[#2d2d2d] px-4 py-2 border-b border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-slate-300">
+            <FileCode className="w-4 h-4" />
+            <span>VIM - {vimFile.name}</span>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" variant="ghost" className="h-7 text-[10px] text-green-400 hover:text-green-300 hover:bg-green-400/10" onClick={handleVimSave}>:wq (Save & Quit)</Button>
+            <Button size="sm" variant="ghost" className="h-7 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-400/10" onClick={handleVimQuit}>:q! (Quit)</Button>
+          </div>
+        </div>
+        <textarea
+          autoFocus
+          className="flex-1 bg-transparent text-slate-300 p-4 outline-none resize-none font-mono"
+          value={vimFile.content}
+          onChange={(e) => setVimFile({ ...vimFile, content: e.target.value })}
+          spellCheck={false}
+        />
+        <div className="bg-[#007acc] text-white px-4 py-0.5 text-[10px] flex justify-between">
+          <span>{vimFile.name}</span>
+          <span>UTF-8 | LF | Ln 1, Col 1</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-slate-950 rounded-xl border border-slate-800 font-mono text-sm h-full flex flex-col overflow-hidden shadow-2xl">
+    <div 
+      style={{ backgroundColor: terminalStyle.bg, color: terminalStyle.color }}
+      className="rounded-xl border border-slate-800 h-full flex flex-col overflow-hidden shadow-2xl"
+    >
       <div className="bg-slate-900 px-4 py-2 border-b border-slate-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
@@ -461,16 +557,51 @@ const LinuxTerminal = () => {
           </div>
           <span className="text-slate-400 text-xs ml-2 font-medium">admin@ops-node: ~/{currentPath.join('/')}</span>
         </div>
-        <div className="text-slate-500 text-[10px] uppercase tracking-widest font-bold">SSH: 10.0.0.45</div>
+        <div className="flex items-center gap-3">
+          <Popover>
+            <PopoverTrigger>
+              <Button size="icon" variant="ghost" className="h-6 w-6 text-slate-400 hover:text-white">
+                <Settings className="h-3 w-3" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-4 bg-slate-900 border-slate-800 text-white shadow-2xl">
+              <div className="space-y-4">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-500">Terminal Settings</h4>
+                <div className="space-y-2">
+                  <label className="text-[10px] text-slate-400">Background Color</label>
+                  <input type="color" value={terminalStyle.bg} onChange={(e) => setTerminalStyle({...terminalStyle, bg: e.target.value})} className="w-full h-8 bg-transparent border border-slate-700 rounded cursor-pointer" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] text-slate-400">Text Color</label>
+                  <input type="color" value={terminalStyle.color} onChange={(e) => setTerminalStyle({...terminalStyle, color: e.target.value})} className="w-full h-8 bg-transparent border border-slate-700 rounded cursor-pointer" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] text-slate-400">Font Size ({terminalStyle.fontSize}px)</label>
+                  <input type="range" min="10" max="24" value={terminalStyle.fontSize} onChange={(e) => setTerminalStyle({...terminalStyle, fontSize: parseInt(e.target.value)})} className="w-full" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] text-slate-400">Font Family</label>
+                  <select value={terminalStyle.fontFamily} onChange={(e) => setTerminalStyle({...terminalStyle, fontFamily: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded text-xs p-1 outline-none">
+                    <option value="JetBrains Mono, monospace">JetBrains Mono</option>
+                    <option value="Fira Code, monospace">Fira Code</option>
+                    <option value="Courier New, monospace">Courier New</option>
+                    <option value="Inter, sans-serif">Inter (Sans)</option>
+                  </select>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+          <div className="text-slate-500 text-[10px] uppercase tracking-widest font-bold">SSH: 10.0.0.45</div>
+        </div>
       </div>
       
       <ScrollArea className="flex-1 p-4">
-        <div className="space-y-1.5">
+        <div className="space-y-1.5" style={{ fontSize: `${terminalStyle.fontSize}px`, fontFamily: terminalStyle.fontFamily }}>
           {history.map((line, i) => (
             <div key={i} className={cn(
               "break-all leading-relaxed",
-              line.type === 'input' ? "text-white" : 
-              line.type === 'error' ? "text-red-400" : "text-slate-300"
+              line.type === 'input' ? "brightness-125" : 
+              line.type === 'error' ? "text-red-400" : "opacity-90"
             )}>
               {line.type === 'input' && (
                 <span className="text-green-500 mr-2 font-bold">admin@ops-node:~$</span>
@@ -484,7 +615,8 @@ const LinuxTerminal = () => {
               autoFocus
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              className="flex-1 bg-transparent border-none outline-none text-white p-0 m-0 focus:ring-0"
+              className="flex-1 bg-transparent border-none outline-none p-0 m-0 focus:ring-0"
+              style={{ color: terminalStyle.color }}
               spellCheck={false}
             />
           </form>
@@ -629,80 +761,17 @@ const CalendarView = () => {
 };
 
 const TutorialsView = () => {
-  const [selectedTutorial, setSelectedTutorial] = useState('504-timeout');
+  const [selectedTutorial, setSelectedTutorial] = useState(mockTutorials[0].id);
 
-  const tutorials = [
-    {
-      id: '504-timeout',
-      title: 'Resolvendo 504 Gateway Timeout',
-      category: 'Network',
-      difficulty: 'Intermediate',
-      description: 'Como diagnosticar e corrigir erros de timeout entre o Nginx e o servidor de aplicação.',
-      steps: [
-        { title: 'Verificar Logs do Nginx', content: 'Execute `tail -f /var/log/nginx/error.log` para identificar se o upstream está demorando a responder.' },
-        { title: 'Aumentar Timeouts', content: 'Ajuste `proxy_read_timeout` e `proxy_connect_timeout` no arquivo de configuração do Nginx.' },
-        { title: 'Checar Recursos do App', content: 'Verifique se a aplicação está travada ou com alto uso de CPU que impeça a resposta rápida.' }
-      ]
-    },
-    {
-      id: 'redis-oom',
-      title: 'Recuperação de Redis OOM',
-      category: 'Database',
-      difficulty: 'Advanced',
-      description: 'O que fazer quando o Redis atinge o limite de memória e para de aceitar escritas.',
-      steps: [
-        { title: 'Identificar Uso de Memória', content: 'Use o comando `INFO memory` no redis-cli para ver o consumo atual e o `maxmemory`.' },
-        { title: 'Ajustar Política de Evicção', content: 'Mude para `allkeys-lru` temporariamente para liberar espaço automaticamente: `CONFIG SET maxmemory-policy allkeys-lru`.' },
-        { title: 'Analisar Chaves Grandes', content: 'Execute `redis-cli --bigkeys` para encontrar chaves que estão consumindo memória excessiva.' }
-      ]
-    },
-    {
-      id: 'ssl-expiry',
-      title: 'Renovação de Certificado SSL',
-      category: 'Security',
-      difficulty: 'Beginner',
-      description: 'Passo a passo para renovar certificados expirados usando Certbot/Let\'s Encrypt.',
-      steps: [
-        { title: 'Verificar Status', content: 'Execute `certbot certificates` para ver quais domínios estão expirados.' },
-        { title: 'Executar Renovação', content: 'Rode `sudo certbot renew` para tentar a renovação automática de todos os certificados.' },
-        { title: 'Recarregar Webserver', content: 'Não esqueça de dar um reload no Nginx ou Apache: `systemctl reload nginx`.' }
-      ]
-    },
-    {
-      id: 'disk-full',
-      title: 'Limpeza de Disco em Linux',
-      category: 'Infrastructure',
-      difficulty: 'Beginner',
-      description: 'Comandos essenciais para encontrar e remover arquivos grandes que lotaram o disco.',
-      steps: [
-        { title: 'Localizar Diretórios Grandes', content: 'Use `du -sh /* 2>/dev/null | sort -rh | head -n 10` para ver quem está usando mais espaço.' },
-        { title: 'Limpar Logs Antigos', content: 'Remova logs rotacionados: `find /var/log -type f -name "*.gz" -delete`.' },
-        { title: 'Limpar Cache de Pacotes', content: 'No Ubuntu/Debian: `sudo apt-get clean`. No CentOS/RHEL: `yum clean all`.' }
-      ]
-    },
-    {
-      id: 'k8s-crashloop',
-      title: 'Debugging CrashLoopBackOff',
-      category: 'Kubernetes',
-      difficulty: 'Advanced',
-      description: 'Como descobrir por que um Pod do Kubernetes não para de reiniciar.',
-      steps: [
-        { title: 'Verificar Eventos', content: 'Rode `kubectl describe pod <pod-name>` e olhe a seção "Events" no final.' },
-        { title: 'Verificar Logs Anteriores', content: 'Se o container crashou, veja os logs da execução anterior: `kubectl logs <pod-name> --previous`.' },
-        { title: 'Checar Liveness Probes', content: 'Verifique se as probes de saúde estão configuradas corretamente e se o app está pronto a tempo.' }
-      ]
-    }
-  ];
-
-  const currentTutorial = tutorials.find(t => t.id === selectedTutorial);
+  const currentTutorial = mockTutorials.find(t => t.id === selectedTutorial);
 
   return (
     <div className="grid grid-cols-12 gap-6 h-full">
-      <div className="col-span-4 space-y-4">
-        <h2 className="text-2xl font-bold text-slate-900 px-2">Tutoriais SRE</h2>
-        <ScrollArea className="h-[calc(100vh-240px)] pr-4">
-          <div className="space-y-3">
-            {tutorials.map((t) => (
+      <div className="col-span-4 space-y-4 flex flex-col h-full min-h-0">
+        <h2 className="text-2xl font-bold text-slate-900 px-2 shrink-0">Tutoriais SRE</h2>
+        <ScrollArea className="flex-1 pr-4 min-h-0">
+          <div className="p-1 space-y-3">
+            {mockTutorials.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setSelectedTutorial(t.id)}
@@ -771,31 +840,12 @@ const TutorialsView = () => {
                         <p className="text-slate-600 text-sm leading-relaxed mb-3">{step.content}</p>
                         <div className="flex items-center gap-2 text-[10px] font-mono text-blue-600 bg-blue-50 w-fit px-2 py-1 rounded">
                           <TerminalIcon className="w-3 h-3" />
-                          <span>Exemplo de comando disponível no Console</span>
+                          <span>{step.title.toLowerCase().replace(/\s+/g, '-')}</span>
                         </div>
                       </div>
                     </div>
                   </div>
                 ))}
-
-                <div className="pt-8">
-                  <Card className="bg-slate-900 border-none overflow-hidden">
-                    <CardContent className="p-6 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-yellow-400 rounded-xl flex items-center justify-center">
-                          <Code2 className="w-6 h-6 text-slate-900" />
-                        </div>
-                        <div>
-                          <p className="text-white font-bold">Precisa de ajuda ao vivo?</p>
-                          <p className="text-slate-400 text-xs">Chame o time de especialistas no chat.</p>
-                        </div>
-                      </div>
-                      <Button className="bg-white text-slate-900 hover:bg-slate-100 font-bold">
-                        Abrir Chat
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
               </div>
             </ScrollArea>
           </motion.div>
@@ -872,8 +922,8 @@ const ChatView = () => {
   return (
     <div className="flex h-full bg-white rounded-3xl border-2 border-slate-100 overflow-hidden">
       {/* Members List */}
-      <div className="w-80 border-r border-slate-100 flex flex-col">
-        <div className="p-6 border-b border-slate-100">
+      <div className="w-80 border-r border-slate-100 flex flex-col h-full">
+        <div className="p-6 border-b border-slate-100 shrink-0">
           <h2 className="text-xl font-bold">Team Chat</h2>
           <div className="mt-4 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -883,7 +933,7 @@ const ChatView = () => {
             />
           </div>
         </div>
-        <ScrollArea className="h-full">
+        <ScrollArea className="flex-1 min-h-0">
           <div className="p-2 space-y-1">
             {members.map((member) => (
               <button
@@ -918,9 +968,9 @@ const ChatView = () => {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col bg-slate-50/30">
+      <div className="flex-1 flex flex-col bg-slate-50/30 h-full min-h-0">
         {/* Chat Header */}
-        <div className="p-4 border-b border-slate-100 bg-white flex items-center justify-between">
+        <div className="p-4 border-b border-slate-100 bg-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <Avatar className="w-10 h-10">
               <AvatarImage src={members.find(m => m.id === selectedMember)?.avatar} />
@@ -948,7 +998,7 @@ const ChatView = () => {
         </div>
 
         {/* Messages */}
-        <ScrollArea className="h-full p-6">
+        <ScrollArea className="flex-1 p-6 min-h-0">
           <div className="space-y-6">
             <div className="flex justify-center">
               <span className="px-3 py-1 bg-slate-200/50 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -1012,6 +1062,18 @@ const ChatView = () => {
 
 const PortalView = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [cart, setCart] = useState<{ product: any, quantity: number }[]>([]);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState<'cart' | 'details' | 'payment' | 'success'>('cart');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    address: '',
+    city: '',
+    zip: '',
+    paymentMethod: 'credit_card'
+  });
 
   const categories = [
     { id: 'plantas', name: 'Plantas de Interior', icon: Leaf, count: portalProducts.filter(p => p.category === 'plantas').length },
@@ -1024,19 +1086,41 @@ const PortalView = () => {
     ? portalProducts.filter(p => p.category === selectedCategory)
     : portalProducts;
 
-  return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+  const addToCart = (product: any) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.product.id === product.id);
+      if (existing) {
+        return prev.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+      }
+      return [...prev, { product, quantity: 1 }];
+    });
+  };
+
+  const removeFromCart = (productId: number) => {
+    setCart(prev => prev.filter(item => item.product.id !== productId));
+  };
+
+  const cartTotal = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
+
+  const PortalContent = ({ isMobile = false }: { isMobile?: boolean }) => (
+    <div className={cn("space-y-8", isMobile && "space-y-4 p-4")}>
+      <div className={cn("flex items-center justify-between", isMobile && "flex-col gap-4 items-start")}>
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Portal de Jardinagem</h1>
-          <p className="text-slate-500 font-medium">Sua loja premium de plantas e equipamentos industriais.</p>
+          <h1 className={cn("font-black text-slate-900 tracking-tight", isMobile ? "text-xl" : "text-3xl")}>Portal de Jardinagem</h1>
+          <p className={cn("text-slate-500 font-medium", isMobile ? "text-[10px]" : "text-sm")}>Sua loja premium de plantas e equipamentos industriais.</p>
         </div>
-        <div className="flex gap-4">
-          <Button variant="outline" className="rounded-xl" onClick={() => setSelectedCategory(null)}>
-            <RefreshCw className="w-4 h-4 mr-2" /> Ver Todos
+        <div className={cn("flex gap-4", isMobile && "w-full")}>
+          <Button variant="outline" className={cn("rounded-xl", isMobile && "flex-1 text-xs h-8")} onClick={() => setSelectedCategory(null)}>
+            <RefreshCw className="w-3 h-3 mr-2" /> {isMobile ? "Todos" : "Ver Todos"}
           </Button>
-          <Button className="bg-green-600 hover:bg-green-700 rounded-xl">
-            <ShoppingBag className="w-4 h-4 mr-2" /> Carrinho (0)
+          <Button 
+            onClick={() => {
+              setCheckoutStep('cart');
+              setIsCheckoutOpen(true);
+            }}
+            className={cn("bg-green-600 hover:bg-green-700 rounded-xl", isMobile && "flex-1 text-xs h-8")}
+          >
+            <ShoppingBag className="w-3 h-3 mr-2" /> {isMobile ? `Cart (${cart.length})` : `Carrinho (${cart.length})`}
           </Button>
         </div>
       </div>
@@ -1046,7 +1130,7 @@ const PortalView = () => {
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative h-64 rounded-3xl overflow-hidden group"
+          className={cn("relative rounded-3xl overflow-hidden group", isMobile ? "h-40" : "h-64")}
         >
           <img 
             src="https://picsum.photos/seed/garden-hero/1200/400" 
@@ -1054,35 +1138,37 @@ const PortalView = () => {
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex flex-col justify-center p-12">
-            <Badge className="w-fit mb-4 bg-green-500">Nova Coleção</Badge>
-            <h2 className="text-4xl font-bold text-white mb-2">Verão Tropical 2024</h2>
-            <p className="text-white/80 max-w-md">Transforme seu espaço com as melhores espécies de palmeiras e plantas ornamentais do mercado.</p>
+          <div className={cn("absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex flex-col justify-center", isMobile ? "p-6" : "p-12")}>
+            <Badge className={cn("w-fit mb-2 bg-green-500", isMobile ? "text-[8px] px-1 h-4" : "mb-4")}>Nova Coleção</Badge>
+            <h2 className={cn("font-bold text-white mb-1", isMobile ? "text-xl" : "text-4xl")}>Verão Tropical 2024</h2>
+            <p className={cn("text-white/80", isMobile ? "text-[10px] line-clamp-2" : "text-sm max-w-md")}>Transforme seu espaço com as melhores espécies de palmeiras e plantas ornamentais do mercado.</p>
           </div>
         </motion.div>
       )}
 
       {/* Categories */}
-      <div className="grid grid-cols-4 gap-6">
+      <div className={cn("grid gap-6", isMobile ? "grid-cols-2 gap-3" : "grid-cols-4")}>
         {categories.map((cat) => (
           <Card 
             key={cat.id} 
             onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
             className={cn(
               "transition-all cursor-pointer group border-2",
-              selectedCategory === cat.id ? "border-green-600 bg-green-50/50 shadow-md" : "hover:border-green-500 border-transparent"
+              selectedCategory === cat.id ? "border-green-600 bg-green-50/50 shadow-md" : "hover:border-green-500 border-transparent",
+              isMobile && "p-0"
             )}
           >
-            <CardContent className="p-6 flex items-center gap-4">
+            <CardContent className={cn("flex items-center gap-4", isMobile ? "p-3 gap-2" : "p-6")}>
               <div className={cn(
-                "p-3 rounded-2xl transition-colors",
-                selectedCategory === cat.id ? "bg-green-600 text-white" : "bg-green-50 text-green-600 group-hover:bg-green-100"
+                "rounded-2xl transition-colors",
+                selectedCategory === cat.id ? "bg-green-600 text-white" : "bg-green-50 text-green-600 group-hover:bg-green-100",
+                isMobile ? "p-2" : "p-3"
               )}>
-                <cat.icon className="w-6 h-6" />
+                <cat.icon className={isMobile ? "w-4 h-4" : "w-6 h-6"} />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-slate-900">{cat.name}</h3>
-                <p className="text-xs text-slate-500">{cat.count} itens</p>
+                <h3 className={cn("font-bold text-slate-900", isMobile ? "text-[10px]" : "text-sm")}>{cat.name}</h3>
+                <p className={cn("text-slate-500", isMobile ? "text-[8px]" : "text-xs")}>{cat.count} itens</p>
               </div>
             </CardContent>
           </Card>
@@ -1092,19 +1178,19 @@ const PortalView = () => {
       {/* Featured Products */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-slate-900">
+          <h2 className={cn("font-bold text-slate-900", isMobile ? "text-sm" : "text-xl")}>
             {selectedCategory 
               ? categories.find(c => c.id === selectedCategory)?.name 
               : "Produtos em Destaque"}
           </h2>
           {selectedCategory && (
-            <Button variant="link" onClick={() => setSelectedCategory(null)} className="text-green-600 font-bold">
+            <Button variant="link" onClick={() => setSelectedCategory(null)} className={cn("text-green-600 font-bold", isMobile && "text-[10px] h-6")}>
               Limpar Filtro
             </Button>
           )}
         </div>
         
-        <div className="grid grid-cols-3 gap-8">
+        <div className={cn("grid gap-8", isMobile ? "grid-cols-1 gap-4" : "grid-cols-3")}>
           <AnimatePresence mode="popLayout">
             {filteredProducts.map((product) => (
               <motion.div
@@ -1116,25 +1202,25 @@ const PortalView = () => {
                 transition={{ duration: 0.2 }}
               >
                 <Card className="overflow-hidden rounded-2xl border-slate-100 hover:shadow-xl transition-all group h-full flex flex-col">
-                  <div className="h-48 overflow-hidden relative">
+                  <div className={cn("overflow-hidden relative", isMobile ? "h-32" : "h-48")}>
                     <img 
                       src={`https://picsum.photos/seed/${product.id + 100}/400/300`} 
                       alt={product.name} 
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       referrerPolicy="no-referrer"
                     />
-                    <button className="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Activity className="w-4 h-4 text-slate-900" />
-                    </button>
                   </div>
-                  <CardContent className="p-6 flex-1 flex flex-col">
+                  <CardContent className={cn("flex-1 flex flex-col", isMobile ? "p-3" : "p-6")}>
                     <div className="flex justify-between items-start mb-2">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-green-600">{product.category}</span>
-                      <span className="font-bold text-slate-900">R$ {product.price.toFixed(2)}</span>
+                      <span className={cn("font-bold text-slate-900", isMobile && "text-xs")}>{product.price.toFixed(2)} €</span>
                     </div>
-                    <h3 className="font-bold text-slate-900 mb-2">{product.name}</h3>
-                    <p className="text-xs text-slate-500 mb-4 flex-1 line-clamp-2">{product.description}</p>
-                    <Button className="w-full bg-slate-900 hover:bg-green-600 text-white rounded-xl transition-colors">
+                    <h3 className={cn("font-bold text-slate-900 mb-2", isMobile ? "text-xs" : "text-sm")}>{product.name}</h3>
+                    <p className={cn("text-slate-500 mb-4 flex-1 line-clamp-2", isMobile ? "text-[10px]" : "text-xs")}>{product.description}</p>
+                    <Button 
+                      onClick={() => addToCart(product)}
+                      className={cn("w-full bg-slate-900 hover:bg-green-600 text-white rounded-xl transition-colors", isMobile && "h-8 text-[10px]")}
+                    >
                       Adicionar ao Carrinho
                     </Button>
                   </CardContent>
@@ -1146,19 +1232,347 @@ const PortalView = () => {
       </div>
 
       {/* Partners Section */}
-      <div className="space-y-6 pt-8 border-t border-slate-100">
-        <h2 className="text-xl font-bold text-slate-900">Nossos Parceiros Premium</h2>
-        <div className="flex flex-wrap gap-4">
+      <div className={cn("space-y-6 pt-8 border-t border-slate-100", isMobile && "pt-4 space-y-3")}>
+        <h2 className={cn("font-bold text-slate-900", isMobile ? "text-sm" : "text-xl")}>Nossos Parceiros Premium</h2>
+        <div className={cn("flex flex-wrap gap-4", isMobile && "gap-2")}>
           {portalCompanies.map((company) => (
-            <div key={company.nome} className="px-6 py-3 bg-white border-2 border-slate-100 rounded-2xl flex items-center gap-3 hover:border-green-500 transition-all cursor-pointer group">
-              <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-green-50 transition-colors">
-                <ShoppingBag className="w-4 h-4 text-slate-400 group-hover:text-green-600" />
+            <div key={company.nome} className={cn("bg-white border-2 border-slate-100 rounded-2xl flex items-center gap-3 hover:border-green-500 transition-all cursor-pointer group", isMobile ? "px-3 py-2 gap-2" : "px-6 py-3")}>
+              <div className={cn("rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-green-50 transition-colors", isMobile ? "w-6 h-6" : "w-8 h-8")}>
+                <ShoppingBag className={isMobile ? "w-3 h-3" : "w-4 h-4 text-slate-400 group-hover:text-green-600"} />
               </div>
-              <span className="text-sm font-bold text-slate-700 group-hover:text-slate-900">{company.nome}</span>
+              <span className={cn("font-bold text-slate-700 group-hover:text-slate-900", isMobile ? "text-[10px]" : "text-sm")}>{company.nome}</span>
             </div>
           ))}
         </div>
       </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col h-full space-y-6">
+      <div className="flex items-center justify-between bg-white p-4 rounded-2xl border-2 border-slate-100 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="p-2 bg-green-100 rounded-xl">
+            <Smartphone className="w-5 h-5 text-green-600" />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-900">Visualização do Portal</h3>
+            <p className="text-xs text-slate-500">Alterne entre as versões Desktop e Mobile.</p>
+          </div>
+        </div>
+        <div className="flex bg-slate-100 p-1 rounded-xl">
+          <button
+            onClick={() => setViewMode('desktop')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all",
+              viewMode === 'desktop' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <Monitor className="w-4 h-4" /> Desktop
+          </button>
+          <button
+            onClick={() => setViewMode('mobile')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all",
+              viewMode === 'mobile' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <Smartphone className="w-4 h-4" /> Mobile
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 min-h-0">
+        {viewMode === 'desktop' ? (
+          <PortalContent />
+        ) : (
+          <div className="flex justify-center h-full py-4">
+            {/* Simulated Phone Frame */}
+            <div className="relative w-[375px] h-[700px] bg-slate-900 rounded-[3rem] border-[8px] border-slate-800 shadow-2xl overflow-hidden flex flex-col">
+              {/* Notch */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-2xl z-20" />
+              
+              {/* Screen Content */}
+              <div className="flex-1 bg-white overflow-y-auto custom-scrollbar">
+                <PortalContent isMobile />
+              </div>
+
+              {/* Home Bar */}
+              <div className="h-6 bg-white flex justify-center items-center">
+                <div className="w-24 h-1 bg-slate-200 rounded-full" />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Checkout Modal */}
+      <AnimatePresence>
+        {isCheckoutOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-600 rounded-xl">
+                    <ShoppingCart className="w-5 h-5 text-white" />
+                  </div>
+                  <h2 className="text-xl font-black text-slate-900">Finalizar Compra</h2>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setIsCheckoutOpen(false)}>
+                  <XCircle className="w-6 h-6 text-slate-400" />
+                </Button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-8">
+                {/* Steps Indicator */}
+                <div className="flex items-center justify-between mb-12 px-12 relative">
+                  <div className="absolute top-1/2 left-12 right-12 h-0.5 bg-slate-100 -translate-y-1/2 z-0" />
+                  {[
+                    { id: 'cart', label: 'Carrinho' },
+                    { id: 'details', label: 'Dados' },
+                    { id: 'payment', label: 'Pagamento' },
+                    { id: 'success', label: 'Sucesso' }
+                  ].map((step, i) => (
+                    <div key={step.id} className="relative z-10 flex flex-col items-center gap-2">
+                      <div className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all",
+                        checkoutStep === step.id ? "bg-green-600 text-white scale-110 shadow-lg" : 
+                        (i < ['cart', 'details', 'payment', 'success'].indexOf(checkoutStep) ? "bg-green-100 text-green-600" : "bg-white border-2 border-slate-100 text-slate-400")
+                      )}>
+                        {i < ['cart', 'details', 'payment', 'success'].indexOf(checkoutStep) ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
+                      </div>
+                      <span className={cn("text-[10px] font-bold uppercase tracking-wider", checkoutStep === step.id ? "text-green-600" : "text-slate-400")}>
+                        {step.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {checkoutStep === 'cart' && (
+                  <div className="space-y-6">
+                    {cart.length === 0 ? (
+                      <div className="text-center py-12 space-y-4">
+                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto">
+                          <ShoppingBag className="w-10 h-10 text-slate-300" />
+                        </div>
+                        <p className="text-slate-500 font-medium">Seu carrinho está vazio.</p>
+                        <Button onClick={() => setIsCheckoutOpen(false)} variant="outline" className="rounded-xl">Voltar às compras</Button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-4">
+                          {cart.map((item) => (
+                            <div key={item.product.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                              <img src={`https://picsum.photos/seed/${item.product.id + 100}/100/100`} className="w-16 h-16 rounded-xl object-cover" referrerPolicy="no-referrer" />
+                              <div className="flex-1">
+                                <h4 className="font-bold text-slate-900">{item.product.name}</h4>
+                                <p className="text-xs text-slate-500">Quantidade: {item.quantity}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-bold text-slate-900">{(item.product.price * item.quantity).toFixed(2)} €</p>
+                                <button onClick={() => removeFromCart(item.product.id)} className="text-[10px] text-red-500 font-bold hover:underline">Remover</button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="p-6 bg-green-50 rounded-2xl border border-green-100 flex justify-between items-center">
+                          <span className="font-bold text-green-900">Total do Pedido</span>
+                          <span className="text-2xl font-black text-green-600">{cartTotal.toFixed(2)} €</span>
+                        </div>
+                        <Button onClick={() => setCheckoutStep('details')} className="w-full bg-slate-900 hover:bg-green-600 text-white h-12 rounded-xl font-bold">
+                          Continuar para Dados de Entrega
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {checkoutStep === 'details' && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Nome Completo</label>
+                        <input 
+                          type="text" 
+                          value={formData.name}
+                          onChange={(e) => setFormData({...formData, name: e.target.value})}
+                          className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-green-500 transition-colors"
+                          placeholder="Ex: João Silva"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase">E-mail</label>
+                        <input 
+                          type="email" 
+                          value={formData.email}
+                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                          className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-green-500 transition-colors"
+                          placeholder="joao@exemplo.com"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-500 uppercase">Endereço</label>
+                      <input 
+                        type="text" 
+                        value={formData.address}
+                        onChange={(e) => setFormData({...formData, address: e.target.value})}
+                        className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-green-500 transition-colors"
+                        placeholder="Rua, Número, Complemento"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Concelho / Distrito</label>
+                        <input 
+                          type="text" 
+                          value={formData.city}
+                          onChange={(e) => setFormData({...formData, city: e.target.value})}
+                          className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-green-500 transition-colors"
+                          placeholder="Ex: Lisboa"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Código Postal</label>
+                        <input 
+                          type="text" 
+                          value={formData.zip}
+                          onChange={(e) => setFormData({...formData, zip: e.target.value})}
+                          className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-green-500 transition-colors"
+                          placeholder="1000-001"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-4 pt-4">
+                      <Button onClick={() => setCheckoutStep('cart')} variant="outline" className="flex-1 rounded-xl h-12">Voltar</Button>
+                      <Button 
+                        disabled={!formData.name || !formData.email || !formData.address}
+                        onClick={() => setCheckoutStep('payment')} 
+                        className="flex-1 bg-slate-900 hover:bg-green-600 text-white h-12 rounded-xl font-bold"
+                      >
+                        Ir para Pagamento
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {checkoutStep === 'payment' && (
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      {[
+                        { id: 'credit_card', label: 'Cartão de Crédito', icon: CreditCard },
+                        { id: 'mbway', label: 'MB Way (Aprovação Instantânea)', icon: Zap },
+                        { id: 'multibanco', label: 'Referência Multibanco', icon: FileText }
+                      ].map((method) => (
+                        <button
+                          key={method.id}
+                          onClick={() => setFormData({...formData, paymentMethod: method.id})}
+                          className={cn(
+                            "w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all",
+                            formData.paymentMethod === method.id ? "border-green-600 bg-green-50 shadow-md" : "border-slate-100 hover:border-slate-200"
+                          )}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className={cn(
+                              "p-2 rounded-xl",
+                              formData.paymentMethod === method.id ? "bg-green-600 text-white" : "bg-slate-100 text-slate-400"
+                            )}>
+                              <method.icon className="w-5 h-5" />
+                            </div>
+                            <span className="font-bold text-slate-900">{method.label}</span>
+                          </div>
+                          <div className={cn(
+                            "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                            formData.paymentMethod === method.id ? "border-green-600 bg-green-600" : "border-slate-200"
+                          )}>
+                            {formData.paymentMethod === method.id && <div className="w-2 h-2 bg-white rounded-full" />}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    {formData.paymentMethod === 'credit_card' && (
+                      <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase">Número do Cartão</label>
+                          <input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none" placeholder="0000 0000 0000 0000" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">Validade</label>
+                            <input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none" placeholder="MM/AA" />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">CVV</label>
+                            <input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none" placeholder="123" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex gap-4 pt-4">
+                      <Button onClick={() => setCheckoutStep('details')} variant="outline" className="flex-1 rounded-xl h-12">Voltar</Button>
+                      <Button 
+                        onClick={() => {
+                          setTimeout(() => setCheckoutStep('success'), 1500);
+                        }} 
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white h-12 rounded-xl font-bold flex items-center justify-center gap-2"
+                      >
+                        Finalizar Pedido - {cartTotal.toFixed(2)} €
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {checkoutStep === 'success' && (
+                  <div className="text-center py-12 space-y-6">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto"
+                    >
+                      <CheckCircle2 className="w-12 h-12 text-green-600" />
+                    </motion.div>
+                    <div className="space-y-2">
+                      <h3 className="text-2xl font-black text-slate-900">Pedido Realizado!</h3>
+                      <p className="text-slate-500">Obrigado pela sua compra, {formData.name.split(' ')[0]}.</p>
+                      <p className="text-xs text-slate-400">Um e-mail de confirmação foi enviado para {formData.email}.</p>
+                    </div>
+                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 max-w-sm mx-auto text-left space-y-3">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Número do Pedido:</span>
+                        <span className="font-bold text-slate-900">#ORD-{Math.floor(Math.random() * 100000)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Método:</span>
+                        <span className="font-bold text-slate-900 capitalize">{formData.paymentMethod.replace('_', ' ')}</span>
+                      </div>
+                      <div className="flex justify-between text-sm pt-2 border-t border-slate-200">
+                        <span className="font-bold text-slate-900">Total Pago:</span>
+                        <span className="font-bold text-green-600">{cartTotal.toFixed(2)} €</span>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => {
+                        setCart([]);
+                        setIsCheckoutOpen(false);
+                      }} 
+                      className="bg-slate-900 hover:bg-green-600 text-white h-12 px-8 rounded-xl font-bold"
+                    >
+                      Voltar ao Início
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -1184,7 +1598,12 @@ const OracleView = () => {
     }
 
     const tableName = match[1];
-    const validTables = ['plantas', 'arvores', 'jardinagem', 'sementes', 'clientes', 'empresas', 'mv_vendas_por_categoria', 'mv_top_clientes'];
+    const validTables = [
+      'plantas', 'arvores', 'jardinagem', 'sementes', 
+      'clientes', 'empresas', 
+      'mv_vendas_por_categoria', 'mv_top_clientes',
+      'cloudenginners', 'devops', 'applicationsupporteng'
+    ];
 
     if (!validTables.includes(tableName)) {
       setError(`Error: Table or View "${tableName}" not found.`);
@@ -1198,6 +1617,30 @@ const OracleView = () => {
       filtered = portalClients;
     } else if (tableName === 'empresas') {
       filtered = portalCompanies;
+    } else if (tableName === 'cloudenginners') {
+      filtered = [
+        { id: 1, nome: 'Cristiano Ronaldo', posicao: 'Avançado', nacionalidade: 'Portugal', especialidade: 'AWS/Azure' },
+        { id: 2, nome: 'Lionel Messi', posicao: 'Avançado', nacionalidade: 'Argentina', especialidade: 'Google Cloud' },
+        { id: 3, nome: 'Neymar Jr', posicao: 'Avançado', nacionalidade: 'Brasil', especialidade: 'Multi-Cloud' },
+        { id: 4, nome: 'Kylian Mbappé', posicao: 'Avançado', nacionalidade: 'França', especialidade: 'Serverless' },
+        { id: 5, nome: 'Erling Haaland', posicao: 'Avançado', nacionalidade: 'Noruega', especialidade: 'Kubernetes' },
+      ];
+    } else if (tableName === 'devops') {
+      filtered = [
+        { id: 1, nome: 'Kevin De Bruyne', posicao: 'Médio', nacionalidade: 'Bélgica', especialidade: 'CI/CD Pipelines' },
+        { id: 2, nome: 'Luka Modrić', posicao: 'Médio', nacionalidade: 'Croácia', especialidade: 'Terraform/IaC' },
+        { id: 3, nome: 'Toni Kroos', posicao: 'Médio', nacionalidade: 'Alemanha', especialidade: 'Automation' },
+        { id: 4, nome: 'Bruno Fernandes', posicao: 'Médio', nacionalidade: 'Portugal', especialidade: 'Monitoring' },
+        { id: 5, nome: 'Joshua Kimmich', posicao: 'Médio', nacionalidade: 'Alemanha', especialidade: 'Docker/Security' },
+      ];
+    } else if (tableName === 'applicationsupporteng') {
+      filtered = [
+        { id: 1, nome: 'Virgil van Dijk', posicao: 'Defesa', nacionalidade: 'Países Baixos', especialidade: 'L3 Support' },
+        { id: 2, nome: 'Sergio Ramos', posicao: 'Defesa', nacionalidade: 'Espanha', especialidade: 'Incident Management' },
+        { id: 3, nome: 'Marquinhos', posicao: 'Defesa', nacionalidade: 'Brasil', especialidade: 'Performance Tuning' },
+        { id: 4, nome: 'Alphonso Davies', posicao: 'Defesa', nacionalidade: 'Canadá', especialidade: 'User Experience' },
+        { id: 5, nome: 'Achraf Hakimi', posicao: 'Defesa', nacionalidade: 'Marrocos', especialidade: 'API Integration' },
+      ];
     } else if (tableName === 'mv_vendas_por_categoria') {
       filtered = [
         { categoria: 'PLANTAS', total_vendas: 12500.45, qtd_itens: 450 },
@@ -1308,6 +1751,30 @@ const OracleView = () => {
                       <div key={view} className="text-[10px] text-slate-500 hover:text-purple-600 cursor-pointer flex items-center gap-2">
                         <Layers className="w-3 h-3 opacity-50" />
                         {view}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* EQUIPAS Schema */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                  <Database className="w-4 h-4 text-green-600" />
+                  EQUIPAS
+                </div>
+                <div className="pl-6 space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-slate-600 hover:text-green-600 cursor-pointer">
+                    <ChevronRight className="w-4 h-4 text-slate-300" />
+                    <Table className="w-3.5 h-3.5" />
+                    Tables
+                  </div>
+                  <div className="pl-6 space-y-1.5 border-l border-slate-100 ml-1.5">
+                    {['CloudEnginners', 'DevOps', 'ApplicationSupportEng'].map(table => (
+                      <div key={table} className="text-xs text-slate-500 hover:text-green-600 cursor-pointer flex items-center gap-2">
+                        <Table className="w-3 h-3 opacity-50" />
+                        {table.toUpperCase()}
                       </div>
                     ))}
                   </div>
@@ -1889,8 +2356,109 @@ const EmailSimulation = () => {
   );
 };
 
+const VisioSimulation = () => {
+  const initialNodes: Node[] = [
+    { 
+      id: '1', 
+      position: { x: 250, y: 50 }, 
+      data: { label: 'Load Balancer' }, 
+      style: { background: '#0078d4', color: '#fff', borderRadius: '8px', fontWeight: 'bold', border: 'none' } 
+    },
+    { 
+      id: '2', 
+      position: { x: 100, y: 150 }, 
+      data: { label: 'Web Server 1' },
+      style: { background: '#f3f2f1', borderRadius: '8px', border: '1px solid #0078d4' }
+    },
+    { 
+      id: '3', 
+      position: { x: 400, y: 150 }, 
+      data: { label: 'Web Server 2' },
+      style: { background: '#f3f2f1', borderRadius: '8px', border: '1px solid #0078d4' }
+    },
+    { 
+      id: '4', 
+      position: { x: 250, y: 250 }, 
+      data: { label: 'Database Cluster' },
+      style: { background: '#217346', color: '#fff', borderRadius: '8px', fontWeight: 'bold', border: 'none' }
+    },
+  ];
+
+  const initialEdges: Edge[] = [
+    { id: 'e1-2', source: '1', target: '2', animated: true },
+    { id: 'e1-3', source: '1', target: '3', animated: true },
+    { id: 'e2-4', source: '2', target: '4' },
+    { id: 'e3-4', source: '3', target: '4' },
+  ];
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  const onConnect = (params: Connection) => setEdges((eds) => addEdge(params, eds));
+
+  const addNode = (type: string) => {
+    const id = `${nodes.length + 1}`;
+    const newNode: Node = {
+      id,
+      position: { x: Math.random() * 400, y: Math.random() * 400 },
+      data: { label: type },
+      style: { 
+        background: type === 'Database' ? '#217346' : (type === 'Server' ? '#f3f2f1' : '#0078d4'),
+        color: type === 'Server' ? '#000' : '#fff',
+        borderRadius: '8px',
+        border: type === 'Server' ? '1px solid #0078d4' : 'none',
+        padding: '10px'
+      }
+    };
+    setNodes((nds) => nds.concat(newNode));
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-white">
+      <div className="bg-slate-50 border-b p-2 flex items-center justify-between">
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => addNode('Server')} className="gap-2">
+            <Server className="w-4 h-4" /> Add Server
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => addNode('Database')} className="gap-2">
+            <Database className="w-4 h-4" /> Add DB
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => addNode('Cloud')} className="gap-2">
+            <Cloud className="w-4 h-4" /> Add Cloud
+          </Button>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="ghost" className="text-slate-400">
+            <Share2 className="w-4 h-4 mr-2" /> Share
+          </Button>
+          <Button size="sm" variant="ghost" className="text-slate-400">
+            <Download className="w-4 h-4 mr-2" /> Export
+          </Button>
+        </div>
+      </div>
+      <div className="flex-1 relative">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          fitView
+        >
+          <Background />
+          <Controls />
+          <MiniMap />
+          <Panel position="top-right" className="bg-white/80 p-2 rounded-lg border shadow-sm backdrop-blur-sm">
+            <p className="text-[10px] font-bold text-slate-500 uppercase">Visio Online</p>
+          </Panel>
+        </ReactFlow>
+      </div>
+    </div>
+  );
+};
+
 const Office365View = () => {
-  const [activeApp, setActiveApp] = useState<'word' | 'excel' | 'onenote' | 'email'>('word');
+  const [activeApp, setActiveApp] = useState<'word' | 'excel' | 'onenote' | 'email' | 'visio'>('word');
 
   return (
     <div className="flex flex-col h-full bg-white rounded-3xl border-2 border-slate-100 overflow-hidden shadow-xl">
@@ -1922,6 +2490,15 @@ const Office365View = () => {
             Excel
           </button>
           <button 
+            onClick={() => setActiveApp('visio')}
+            className={cn(
+              "px-4 py-1 rounded-md text-sm font-medium transition-all",
+              activeApp === 'visio' ? "bg-white text-[#323130]" : "text-white hover:bg-white/10"
+            )}
+          >
+            Visio
+          </button>
+          <button 
             onClick={() => setActiveApp('onenote')}
             className={cn(
               "px-4 py-1 rounded-md text-sm font-medium transition-all",
@@ -1945,6 +2522,7 @@ const Office365View = () => {
       <div className="flex-1 overflow-hidden">
         {activeApp === 'word' && <WordSimulation />}
         {activeApp === 'excel' && <ExcelSimulation />}
+        {activeApp === 'visio' && <VisioSimulation />}
         {activeApp === 'onenote' && <OneNoteSimulation />}
         {activeApp === 'email' && <EmailSimulation />}
       </div>
@@ -3749,6 +4327,78 @@ const EDIIntegrationView = () => {
 };
 
 const InfrastructureView = ({ isApacheRunning }: { isApacheRunning: boolean }) => {
+  const infoData = {
+    waf: {
+      title: "AWS WAF",
+      description: "Web Application Firewall que protege contra exploits comuns na web e bots maliciosos. Filtra o tráfego antes de chegar à infraestrutura interna."
+    },
+    cloudfront: {
+      title: "CloudFront",
+      description: "Rede de Entrega de Conteúdo (CDN) global da AWS. Faz o cache de conteúdo estático e dinâmico perto dos usuários para reduzir a latência."
+    },
+    alb: {
+      title: "App Load Balancer",
+      description: "Distribui o tráfego de entrada entre vários alvos, como instâncias EC2 ou containers, garantindo alta disponibilidade e tolerância a falhas."
+    },
+    apache: {
+      title: "Apache HTTPD",
+      description: "Servidor web robusto que atua como proxy reverso e servidor de arquivos estáticos, gerenciando as requisições antes de enviá-las para as APIs."
+    },
+    frontend: {
+      title: "Portal Frontend",
+      description: "Aplicação cliente construída com React e Vite. É o que o usuário final vê e interage no navegador."
+    },
+    api: {
+      title: "Portal API",
+      description: "Backend principal em Node.js/Express. Processa a lógica de negócio e comunica com o banco de dados Oracle."
+    },
+    auth: {
+      title: "Auth Service",
+      description: "Serviço de autenticação em Go. Gerencia tokens OAuth2 e garante que apenas usuários autorizados acessem o sistema."
+    },
+    oracle: {
+      title: "Oracle 19c",
+      description: "Banco de dados relacional principal. Armazena todos os dados críticos de negócio com alta consistência e segurança."
+    },
+    redis: {
+      title: "Redis Cache",
+      description: "Banco de dados em memória usado para cache de sessões e dados frequentes, acelerando drasticamente o tempo de resposta."
+    },
+    cyber: {
+      title: "Cybersecurity Hub",
+      description: "Central de monitoramento e ferramentas de segurança (Nmap, Metasploit) para detecção proativa de vulnerabilidades."
+    },
+    jardim: {
+      title: "JardimPartner Integration",
+      description: "Integração externa com parceiros de logística e fornecedores para sincronização de estoque e pedidos."
+    },
+    edi: {
+      title: "EDI Partners",
+      description: "Intercâmbio Eletrônico de Dados com parceiros comerciais para automação de processos de compra e faturação."
+    }
+  };
+
+  const InfoItem = ({ id, children }: { id: keyof typeof infoData, children: React.ReactNode }) => (
+    <Popover>
+      <PopoverTrigger>
+        <div className="cursor-help transition-transform hover:scale-105 active:scale-95">
+          {children}
+        </div>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-4 bg-white border-2 border-slate-200 shadow-xl rounded-2xl">
+        <div className="space-y-2">
+          <h4 className="font-bold text-slate-900 flex items-center gap-2">
+            <Info className="w-4 h-4 text-blue-600" />
+            {infoData[id].title}
+          </h4>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            {infoData[id].description}
+          </p>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -3783,17 +4433,21 @@ const InfrastructureView = ({ isApacheRunning }: { isApacheRunning: boolean }) =
             {/* Layer 2: Edge */}
             <div className="grid grid-cols-2 gap-24 relative">
               <div className="flex flex-col items-center gap-3">
-                <div className="w-24 h-24 bg-white rounded-2xl border-2 border-blue-100 flex flex-col items-center justify-center shadow-sm hover:border-blue-500 transition-all group cursor-help">
-                  <Shield className="w-8 h-8 text-blue-600 mb-1" />
-                  <span className="text-[10px] font-bold uppercase text-blue-600">AWS WAF</span>
-                </div>
+                <InfoItem id="waf">
+                  <div className="w-24 h-24 bg-white rounded-2xl border-2 border-blue-100 flex flex-col items-center justify-center shadow-sm hover:border-blue-500 transition-all group">
+                    <Shield className="w-8 h-8 text-blue-600 mb-1" />
+                    <span className="text-[10px] font-bold uppercase text-blue-600">AWS WAF</span>
+                  </div>
+                </InfoItem>
                 <Badge variant="secondary" className="bg-green-100 text-green-700">Active</Badge>
               </div>
               <div className="flex flex-col items-center gap-3">
-                <div className="w-24 h-24 bg-white rounded-2xl border-2 border-blue-100 flex flex-col items-center justify-center shadow-sm hover:border-blue-500 transition-all group cursor-help">
-                  <Layers className="w-8 h-8 text-blue-600 mb-1" />
-                  <span className="text-[10px] font-bold uppercase text-blue-600">CloudFront</span>
-                </div>
+                <InfoItem id="cloudfront">
+                  <div className="w-24 h-24 bg-white rounded-2xl border-2 border-blue-100 flex flex-col items-center justify-center shadow-sm hover:border-blue-500 transition-all group">
+                    <Layers className="w-8 h-8 text-blue-600 mb-1" />
+                    <span className="text-[10px] font-bold uppercase text-blue-600">CloudFront</span>
+                  </div>
+                </InfoItem>
                 <Badge variant="secondary" className="bg-green-100 text-green-700">99.9% Cache Hit</Badge>
               </div>
               
@@ -3807,23 +4461,27 @@ const InfrastructureView = ({ isApacheRunning }: { isApacheRunning: boolean }) =
             <div className="flex flex-col items-center gap-6">
               <div className="flex gap-12 items-center">
                 <div className="flex flex-col items-center gap-3">
-                  <div className="w-32 h-20 bg-blue-600 rounded-xl flex flex-col items-center justify-center shadow-lg text-white">
-                    <RefreshCw className="w-6 h-6 mb-1" />
-                    <span className="text-[10px] font-bold uppercase">App Load Balancer</span>
-                  </div>
+                  <InfoItem id="alb">
+                    <div className="w-32 h-20 bg-blue-600 rounded-xl flex flex-col items-center justify-center shadow-lg text-white">
+                      <RefreshCw className="w-6 h-6 mb-1" />
+                      <span className="text-[10px] font-bold uppercase">App Load Balancer</span>
+                    </div>
+                  </InfoItem>
                   <p className="text-[10px] font-mono text-slate-400">alb-prod-01.aws.com</p>
                 </div>
 
                 <ArrowRight className="w-6 h-6 text-slate-300" />
 
                 <div className="flex flex-col items-center gap-3">
-                  <div className={cn(
-                    "w-32 h-20 rounded-xl flex flex-col items-center justify-center shadow-lg text-white transition-all",
-                    isApacheRunning ? "bg-red-600" : "bg-slate-400 grayscale"
-                  )}>
-                    <Server className="w-6 h-6 mb-1" />
-                    <span className="text-[10px] font-bold uppercase">Apache HTTPD</span>
-                  </div>
+                  <InfoItem id="apache">
+                    <div className={cn(
+                      "w-32 h-20 rounded-xl flex flex-col items-center justify-center shadow-lg text-white transition-all",
+                      isApacheRunning ? "bg-red-600" : "bg-slate-400 grayscale"
+                    )}>
+                      <Server className="w-6 h-6 mb-1" />
+                      <span className="text-[10px] font-bold uppercase">Apache HTTPD</span>
+                    </div>
+                  </InfoItem>
                   <Badge variant="outline" className={cn(
                     "text-[8px] uppercase",
                     isApacheRunning ? "text-green-600 border-green-200" : "text-red-600 border-red-200"
@@ -3842,71 +4500,77 @@ const InfrastructureView = ({ isApacheRunning }: { isApacheRunning: boolean }) =
 
             {/* Layer 4: Compute (EKS) */}
             <div className="grid grid-cols-3 gap-12 w-full max-w-5xl">
-              <div className="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                    <Cpu className="w-5 h-5 text-blue-600" />
+              <InfoItem id="frontend">
+                <div className="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm space-y-4 h-full">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <Cpu className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold">Portal Frontend</h4>
+                      <p className="text-[10px] text-slate-500">React / Vite / Tailwind</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold">Portal Frontend</h4>
-                    <p className="text-[10px] text-slate-500">React / Vite / Tailwind</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-slate-500">Replicas</span>
+                      <span className="font-bold">6 / 6</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-green-500 w-full" />
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-slate-500">Replicas</span>
-                    <span className="font-bold">6 / 6</span>
-                  </div>
-                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 w-full" />
-                  </div>
-                </div>
-              </div>
+              </InfoItem>
 
-              <div className="bg-white p-6 rounded-2xl border-2 border-blue-500 shadow-md space-y-4 relative ring-4 ring-blue-50">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-blue-600">Primary API</Badge>
+              <InfoItem id="api">
+                <div className="bg-white p-6 rounded-2xl border-2 border-blue-500 shadow-md space-y-4 relative ring-4 ring-blue-50 h-full">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-blue-600">Primary API</Badge>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <Activity className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold">Portal API</h4>
+                      <p className="text-[10px] text-slate-500">Node.js / Express / Oracle</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-slate-500">Throughput</span>
+                      <span className="font-bold">12.4k req/s</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 w-[85%]" />
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                    <Activity className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold">Portal API</h4>
-                    <p className="text-[10px] text-slate-500">Node.js / Express / Oracle</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-slate-500">Throughput</span>
-                    <span className="font-bold">12.4k req/s</span>
-                  </div>
-                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 w-[85%]" />
-                  </div>
-                </div>
-              </div>
+              </InfoItem>
 
-              <div className="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-blue-600" />
+              <InfoItem id="auth">
+                <div className="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm space-y-4 h-full">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold">Auth Service</h4>
+                      <p className="text-[10px] text-slate-500">Go / OAuth2</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold">Auth Service</h4>
-                    <p className="text-[10px] text-slate-500">Go / OAuth2</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-slate-500">Latency</span>
+                      <span className="font-bold">12ms</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-green-500 w-full" />
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-slate-500">Latency</span>
-                    <span className="font-bold">12ms</span>
-                  </div>
-                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 w-full" />
-                  </div>
-                </div>
-              </div>
+              </InfoItem>
             </div>
 
             <div className="w-full max-w-4xl h-px bg-slate-200 relative">
@@ -3919,49 +4583,59 @@ const InfrastructureView = ({ isApacheRunning }: { isApacheRunning: boolean }) =
               <div className="space-y-4">
                 <h5 className="text-[10px] font-bold text-slate-400 uppercase text-center">Persistence Layer</h5>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-900 text-white p-4 rounded-xl flex flex-col items-center gap-2 shadow-lg border border-red-900">
-                    <Database className="w-6 h-6 text-red-500" />
-                    <span className="text-[10px] font-bold uppercase">Oracle 19c</span>
-                  </div>
-                  <div className="bg-slate-900 text-white p-4 rounded-xl flex flex-col items-center gap-2 shadow-lg border border-orange-900">
-                    <HardDrive className="w-6 h-6 text-orange-400" />
-                    <span className="text-[10px] font-bold uppercase">Redis Cache</span>
-                  </div>
+                  <InfoItem id="oracle">
+                    <div className="bg-slate-900 text-white p-4 rounded-xl flex flex-col items-center gap-2 shadow-lg border border-red-900 w-full">
+                      <Database className="w-6 h-6 text-red-500" />
+                      <span className="text-[10px] font-bold uppercase">Oracle 19c</span>
+                    </div>
+                  </InfoItem>
+                  <InfoItem id="redis">
+                    <div className="bg-slate-900 text-white p-4 rounded-xl flex flex-col items-center gap-2 shadow-lg border border-orange-900 w-full">
+                      <HardDrive className="w-6 h-6 text-orange-400" />
+                      <span className="text-[10px] font-bold uppercase">Redis Cache</span>
+                    </div>
+                  </InfoItem>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <h5 className="text-[10px] font-bold text-slate-400 uppercase text-center">Security & Monitoring</h5>
-                <div className="bg-slate-900 text-white p-6 rounded-2xl border-2 border-red-600 shadow-xl relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-100 transition-opacity">
-                    <Shield className="w-12 h-12 text-red-600" />
-                  </div>
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Shield className="w-5 h-5 text-red-500" />
-                      <span className="text-xs font-bold uppercase tracking-widest">Cybersecurity Hub</span>
+                <InfoItem id="cyber">
+                  <div className="bg-slate-900 text-white p-6 rounded-2xl border-2 border-red-600 shadow-xl relative overflow-hidden group h-full">
+                    <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-100 transition-opacity">
+                      <Shield className="w-12 h-12 text-red-600" />
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="text-[8px] bg-slate-800 p-1.5 rounded border border-slate-700">Nmap Scanner</div>
-                      <div className="text-[8px] bg-slate-800 p-1.5 rounded border border-slate-700">WAF Interceptor</div>
-                      <div className="text-[8px] bg-slate-800 p-1.5 rounded border border-slate-700">Metasploit Console</div>
-                      <div className="text-[8px] bg-slate-800 p-1.5 rounded border border-slate-700">Hashcat Engine</div>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Shield className="w-5 h-5 text-red-500" />
+                        <span className="text-xs font-bold uppercase tracking-widest">Cybersecurity Hub</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="text-[8px] bg-slate-800 p-1.5 rounded border border-slate-700">Nmap Scanner</div>
+                        <div className="text-[8px] bg-slate-800 p-1.5 rounded border border-slate-700">WAF Interceptor</div>
+                        <div className="text-[8px] bg-slate-800 p-1.5 rounded border border-slate-700">Metasploit Console</div>
+                        <div className="text-[8px] bg-slate-800 p-1.5 rounded border border-slate-700">Hashcat Engine</div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </InfoItem>
               </div>
 
               <div className="space-y-4">
                 <h5 className="text-[10px] font-bold text-slate-400 uppercase text-center">External Integrations</h5>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-blue-50 border-2 border-blue-500 p-4 rounded-xl flex flex-col items-center gap-2 shadow-sm ring-4 ring-blue-50/50">
-                    <Server className="w-6 h-6 text-blue-600" />
-                    <span className="text-[9px] font-bold text-center leading-tight">JardimPartner<br/>Integration</span>
-                  </div>
-                  <div className="bg-white border-2 border-slate-100 p-4 rounded-xl flex flex-col items-center gap-2">
-                    <Network className="w-6 h-6 text-cyan-500" />
-                    <span className="text-[9px] font-bold uppercase">EDI Partners</span>
-                  </div>
+                  <InfoItem id="jardim">
+                    <div className="bg-blue-50 border-2 border-blue-500 p-4 rounded-xl flex flex-col items-center gap-2 shadow-sm ring-4 ring-blue-50/50 w-full">
+                      <Server className="w-6 h-6 text-blue-600" />
+                      <span className="text-[9px] font-bold text-center leading-tight">JardimPartner<br/>Integration</span>
+                    </div>
+                  </InfoItem>
+                  <InfoItem id="edi">
+                    <div className="bg-white border-2 border-slate-100 p-4 rounded-xl flex flex-col items-center gap-2 w-full">
+                      <Network className="w-6 h-6 text-cyan-500" />
+                      <span className="text-[9px] font-bold uppercase">EDI Partners</span>
+                    </div>
+                  </InfoItem>
                 </div>
               </div>
             </div>
@@ -4065,12 +4739,12 @@ const DatabaseView = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
       {/* DB List */}
-      <div className="lg:col-span-4 flex flex-col gap-4 overflow-hidden">
+      <div className="lg:col-span-4 flex flex-col gap-4 overflow-hidden min-h-0 h-full">
         <div className="flex items-center justify-between shrink-0">
           <h2 className="text-xl font-bold">Database Instances</h2>
           <Badge variant="secondary">{mockDatabases.length} Active</Badge>
         </div>
-        <ScrollArea className="flex-1 border rounded-xl bg-white">
+        <ScrollArea className="flex-1 border rounded-xl bg-white min-h-0">
           <div className="divide-y">
             {mockDatabases.map((db) => (
               <div 
@@ -4454,11 +5128,12 @@ export default function App() {
                               <th className="px-4 py-3">Priority</th>
                               <th className="px-4 py-3">Status</th>
                               <th className="px-4 py-3">Assignee</th>
+                              <th className="px-4 py-3">Role</th>
                               <th className="px-4 py-3">System</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y">
-                            {mockIncidents.map((inc) => (
+                            {mockIncidents.slice(0, 10).map((inc) => (
                               <tr 
                                 key={inc.id} 
                                 className="hover:bg-slate-50 cursor-pointer transition-colors"
@@ -4478,6 +5153,11 @@ export default function App() {
                                     </Avatar>
                                     {inc.assignee}
                                   </div>
+                                </td>
+                                <td className="px-4 py-4">
+                                  <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider border-blue-200 text-blue-700 bg-blue-50">
+                                    {inc.role}
+                                  </Badge>
                                 </td>
                                 <td className="px-4 py-4 text-slate-500">{inc.system}</td>
                               </tr>
@@ -4500,12 +5180,12 @@ export default function App() {
                 className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full"
               >
                 {/* Incident List */}
-                <div className="lg:col-span-4 flex flex-col gap-4 overflow-hidden">
+                <div className="lg:col-span-4 flex flex-col gap-4 overflow-hidden min-h-0 h-full">
                   <div className="flex items-center justify-between shrink-0">
                     <h2 className="text-xl font-bold">Incidents</h2>
                     <Badge variant="secondary">{mockIncidents.length} Total</Badge>
                   </div>
-                  <ScrollArea className="flex-1 border rounded-xl bg-white">
+                  <ScrollArea className="flex-1 border rounded-xl bg-white min-h-0">
                     <div className="divide-y">
                       {mockIncidents.map((inc) => (
                         <div 
@@ -4517,7 +5197,10 @@ export default function App() {
                           )}
                         >
                           <div className="flex justify-between items-start mb-2">
-                            <span className="text-xs font-mono text-slate-500">{inc.id}</span>
+                            <div className="flex flex-col gap-1">
+                              <span className="text-xs font-mono text-slate-500">{inc.id}</span>
+                              <span className="text-[10px] font-bold uppercase text-blue-600">{inc.role}</span>
+                            </div>
                             <PriorityBadge priority={inc.priority} />
                           </div>
                           <h3 className="font-bold text-sm mb-1 line-clamp-2">{inc.title}</h3>
@@ -4549,6 +5232,9 @@ export default function App() {
                               <div>
                                 <div className="flex items-center gap-3 mb-2">
                                   <span className="text-sm font-mono text-yellow-700 font-bold">{selectedIncident.id}</span>
+                                  <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider border-yellow-300 text-yellow-800 bg-yellow-50">
+                                    {selectedIncident.role}
+                                  </Badge>
                                   <PriorityBadge priority={selectedIncident.priority} />
                                   <StatusBadge status={selectedIncident.status} />
                                 </div>

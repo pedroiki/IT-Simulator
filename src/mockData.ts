@@ -1,147 +1,122 @@
-import { Incident, SystemHealth, DatabaseInstance, QueryPerformance, FileSystemItem } from './types';
+import { Incident, SystemHealth, DatabaseInstance, QueryPerformance, FileSystemItem, Tutorial } from './types';
 
 export const mockIncidents: Incident[] = [
-  {
-    id: 'INC-2024-001',
-    title: 'Oracle DB Latency: Vortex/Nebula Inventory',
-    priority: 'Critical',
-    status: 'In Progress',
-    assignee: 'Sarah Chen',
-    createdAt: '2024-04-13T08:30:00Z',
-    system: 'Oracle 19c',
-    description: 'The inventory queries for Vortex and Nebula are experiencing high latency. Affecting EDI processing.',
-    logs: [
-      { timestamp: '08:30:05', level: 'error', message: 'ORA-12170: TNS:Connect timeout occurred' },
-      { timestamp: '08:31:12', level: 'warn', message: 'Retrying connection to ORCL_PROD (1/3)...' },
-      { timestamp: '08:32:45', level: 'error', message: 'Connection pool exhausted for portal-api.' }
-    ],
-    timeline: [
-      { id: '1', timestamp: '08:30:00', action: 'Incident Created', user: 'Oracle Enterprise Manager' },
-      { id: '2', timestamp: '08:35:00', action: 'Assigned to Sarah Chen', user: 'Auto-Router' },
-      { id: '3', timestamp: '08:40:00', action: 'Investigation Started', user: 'Sarah Chen', details: 'Checking TNS listener and active sessions.' }
-    ]
-  },
-  {
-    id: 'INC-2024-002',
-    title: 'Image CDN Failure: Vortex Catalog',
-    priority: 'High',
-    status: 'Open',
-    assignee: 'Unassigned',
-    createdAt: '2024-04-13T09:15:00Z',
-    system: 'CloudFront',
-    description: 'Product images for Vortex Coffee are failing to load (404/502). Suspected cache invalidation issue.',
-    logs: [
-      { timestamp: '09:15:20', level: 'warn', message: 'Origin fetch failed for /seed/101/400/300' },
-      { timestamp: '09:16:00', level: 'info', message: 'Purging edge cache for /assets/products/*' }
-    ],
-    timeline: [
-      { id: '1', timestamp: '09:15:00', action: 'Incident Created', user: 'CloudWatch Alert' }
-    ]
-  },
-  {
-    id: 'INC-2024-003',
-    title: 'Database Connection Pool Exhaustion',
-    priority: 'Medium',
-    status: 'Resolved',
-    assignee: 'Maradona',
-    createdAt: '2024-04-13T07:00:00Z',
-    system: 'Azure SQL',
-    description: 'Connection pool for the inventory-db reached 100% capacity. Resolved by increasing max connections.',
-    logs: [
-      { timestamp: '07:00:00', level: 'error', message: 'FATAL: remaining connection slots are reserved for non-replication superuser connections' }
-    ],
-    timeline: [
-      { id: '1', timestamp: '07:00:00', action: 'Incident Created', user: 'Azure Monitor' },
-      { id: '2', timestamp: '07:15:00', action: 'Config Updated', user: 'Marcus Rodriguez', details: 'Increased pool size to 500.' },
-      { id: '3', timestamp: '07:20:00', action: 'Incident Resolved', user: 'Marcus Rodriguez' }
-    ]
-  },
-  {
-    id: 'INC-2024-004',
-    title: 'SSL Certificate Expiry: checkout.itreal.life',
-    priority: 'Critical',
-    status: 'Open',
-    assignee: 'Unassigned',
-    createdAt: '2024-04-13T11:00:00Z',
-    system: 'Cloudflare WAF',
-    description: 'The SSL certificate for the checkout subdomain expired at 10:59 UTC. Customers are seeing "Your connection is not private" errors.',
-    logs: [
-      { timestamp: '11:00:01', level: 'error', message: 'SSL_ERROR_BAD_CERT_DOMAIN: checkout.itreal.life' },
-      { timestamp: '11:00:05', level: 'error', message: 'Handshake failed: Certificate expired' }
-    ],
-    timeline: [
-      { id: '1', timestamp: '11:00:00', action: 'Incident Created', user: 'UptimeRobot' }
-    ]
-  },
-  {
-    id: 'INC-2024-005',
-    title: 'Redis OOM: Session Cache Cluster',
-    priority: 'High',
-    status: 'In Progress',
-    assignee: 'Messi',
-    createdAt: '2024-04-13T10:30:00Z',
-    system: 'Redis Cluster',
-    description: 'Redis node is out of memory and rejecting writes. Eviction policy is set to noeviction.',
-    logs: [
-      { timestamp: '10:30:10', level: 'error', message: 'OOM command not allowed when used memory > "maxmemory"' },
-      { timestamp: '10:31:00', level: 'warn', message: 'Memory usage at 99.8%' }
-    ],
-    timeline: [
-      { id: '1', timestamp: '10:30:00', action: 'Incident Created', user: 'Prometheus Alert' },
-      { id: '2', timestamp: '10:35:00', action: 'Assigned to Messi', user: 'Auto-Router' }
-    ]
-  },
-  {
-    id: 'INC-2024-006',
-    title: 'Disk Space Critical: /var/log on log-srv-01',
-    priority: 'Medium',
-    status: 'Open',
-    assignee: 'Unassigned',
-    createdAt: '2024-04-13T11:45:00Z',
-    system: 'Logging Server',
-    description: 'Disk usage on /var/log reached 98%. Risk of losing application logs.',
-    logs: [
-      { timestamp: '11:45:10', level: 'error', message: 'No space left on device: /var/log/syslog' }
-    ],
-    timeline: [
-      { id: '1', timestamp: '11:45:00', action: 'Incident Created', user: 'Zabbix Agent' }
-    ]
-  },
-  {
-    id: 'INC-2024-007',
-    title: 'Global DNS Resolution Failure',
-    priority: 'Critical',
-    status: 'In Progress',
-    assignee: 'CR7',
-    createdAt: '2024-04-13T12:00:00Z',
-    system: 'Route 53',
-    description: 'DNS queries for itreal.life are failing globally. Suspected BGP leak or provider outage.',
-    logs: [
-      { timestamp: '12:00:05', level: 'error', message: 'SERVFAIL for itreal.life' },
-      { timestamp: '12:01:00', level: 'error', message: 'NXDOMAIN for api.itreal.life' }
-    ],
-    timeline: [
-      { id: '1', timestamp: '12:00:00', action: 'Incident Created', user: 'ThousandEyes' },
-      { id: '2', timestamp: '12:05:00', action: 'Assigned to CR7', user: 'Auto-Router' }
-    ]
-  },
-  {
-    id: 'INC-2024-008',
-    title: 'Pod CrashLoopBackOff: auth-service',
-    priority: 'High',
-    status: 'Open',
-    assignee: 'Unassigned',
-    createdAt: '2024-04-13T12:15:00Z',
-    system: 'Kubernetes',
-    description: 'Auth-service pods are crashing repeatedly. Exit code 137 (OOMKilled).',
-    logs: [
-      { timestamp: '12:15:10', level: 'error', message: 'Back-off restarting failed container' },
-      { timestamp: '12:16:00', level: 'error', message: 'Memory limit reached: 512Mi' }
-    ],
-    timeline: [
-      { id: '1', timestamp: '12:15:00', action: 'Incident Created', user: 'Kube-State-Metrics' }
-    ]
-  }
+  // Cloud Engineer (CE) - 19 Incidents
+  { id: 'INC-CE-001', title: 'VPC Peering Connectivity Loss', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T08:00:00Z', system: 'AWS VPC', role: 'Cloud Engineer', description: 'Prod and Staging VPCs cannot communicate.', logs: [{ timestamp: '08:00:05', level: 'error', message: 'VPC Peering pcx-123 status: disconnected' }], timeline: [{ id: '1', timestamp: '08:00:00', action: 'Incident Created', user: 'CloudWatch' }] },
+  { id: 'INC-CE-002', title: 'S3 Bucket Policy Misconfiguration', priority: 'Critical', status: 'In Progress', assignee: 'CR7', createdAt: '2024-04-14T08:15:00Z', system: 'AWS S3', role: 'Cloud Engineer', description: 'Public access detected on private bucket.', logs: [{ timestamp: '08:15:10', level: 'error', message: 'Config Rule: S3_BUCKET_PUBLIC_READ_PROHIBITED non-compliant' }], timeline: [{ id: '1', timestamp: '08:15:00', action: 'Incident Created', user: 'AWS Config' }] },
+  { id: 'INC-CE-003', title: 'RDS Read Replica Lag', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T08:30:00Z', system: 'AWS RDS', role: 'Cloud Engineer', description: 'Replica lag exceeding 300 seconds.', logs: [{ timestamp: '08:30:05', level: 'warn', message: 'ReplicaLag: 350s' }], timeline: [{ id: '1', timestamp: '08:30:00', action: 'Incident Created', user: 'CloudWatch' }] },
+  { id: 'INC-CE-004', title: 'Route53 Health Check Failed', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T08:45:00Z', system: 'Route 53', role: 'Cloud Engineer', description: 'Primary endpoint unhealthy, failover triggered.', logs: [{ timestamp: '08:45:10', level: 'error', message: 'HealthCheck Status: Unhealthy' }], timeline: [{ id: '1', timestamp: '08:45:00', action: 'Incident Created', user: 'Route53' }] },
+  { id: 'INC-CE-005', title: 'CloudFront 504 Gateway Timeout', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T09:00:00Z', system: 'CloudFront', role: 'Cloud Engineer', description: 'Origin taking too long to respond.', logs: [{ timestamp: '09:00:05', level: 'error', message: 'OriginTimeout: 504' }], timeline: [{ id: '1', timestamp: '09:00:00', action: 'Incident Created', user: 'CloudFront' }] },
+  { id: 'INC-CE-006', title: 'Lambda Execution Timeout', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T09:15:00Z', system: 'AWS Lambda', role: 'Cloud Engineer', description: 'Image processing function timing out.', logs: [{ timestamp: '09:15:10', level: 'error', message: 'Task timed out after 30.03 seconds' }], timeline: [{ id: '1', timestamp: '09:15:00', action: 'Incident Created', user: 'CloudWatch' }] },
+  { id: 'INC-CE-007', title: 'API Gateway 429 Too Many Requests', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T09:30:00Z', system: 'API Gateway', role: 'Cloud Engineer', description: 'Rate limit exceeded for client API key.', logs: [{ timestamp: '09:30:05', level: 'warn', message: 'ThrottlingException: Rate exceeded' }], timeline: [{ id: '1', timestamp: '09:30:00', action: 'Incident Created', user: 'CloudWatch' }] },
+  { id: 'INC-CE-008', title: 'EC2 Instance Status Check Failed', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T09:45:00Z', system: 'AWS EC2', role: 'Cloud Engineer', description: 'System status check failed for app-server-01.', logs: [{ timestamp: '09:45:10', level: 'error', message: 'StatusCheckFailed_System: 1' }], timeline: [{ id: '1', timestamp: '09:45:00', action: 'Incident Created', user: 'CloudWatch' }] },
+  { id: 'INC-CE-009', title: 'Auto Scaling Group Max Capacity Reached', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T10:00:00Z', system: 'AWS ASG', role: 'Cloud Engineer', description: 'ASG cannot scale further, CPU still high.', logs: [{ timestamp: '10:00:05', level: 'warn', message: 'AtMaxCapacity: True' }], timeline: [{ id: '1', timestamp: '10:00:00', action: 'Incident Created', user: 'CloudWatch' }] },
+  { id: 'INC-CE-010', title: 'ELB Unhealthy Hosts Count High', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T10:15:00Z', system: 'AWS ELB', role: 'Cloud Engineer', description: 'Target group has 0 healthy hosts.', logs: [{ timestamp: '10:15:10', level: 'error', message: 'UnHealthyHostCount: 5' }], timeline: [{ id: '1', timestamp: '10:15:00', action: 'Incident Created', user: 'CloudWatch' }] },
+  { id: 'INC-CE-011', title: 'EKS Node Group Scaling Failure', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T10:30:00Z', system: 'AWS EKS', role: 'Cloud Engineer', description: 'Insufficient capacity to launch new nodes.', logs: [{ timestamp: '10:30:05', level: 'error', message: 'InsufficientInstanceCapacity: us-east-1a' }], timeline: [{ id: '1', timestamp: '10:30:00', action: 'Incident Created', user: 'CloudWatch' }] },
+  { id: 'INC-CE-012', title: 'ECS Task Definition Update Failed', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T10:45:00Z', system: 'AWS ECS', role: 'Cloud Engineer', description: 'New task definition failing health checks.', logs: [{ timestamp: '10:45:10', level: 'error', message: 'ELB health check failed for task' }], timeline: [{ id: '1', timestamp: '10:45:00', action: 'Incident Created', user: 'ECS Service' }] },
+  { id: 'INC-CE-013', title: 'SNS Topic Delivery Failure', priority: 'Low', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T11:00:00Z', system: 'AWS SNS', role: 'Cloud Engineer', description: 'Messages not reaching SQS subscriber.', logs: [{ timestamp: '11:00:05', level: 'warn', message: 'DeliveryFailure: SQS' }], timeline: [{ id: '1', timestamp: '11:00:00', action: 'Incident Created', user: 'CloudWatch' }] },
+  { id: 'INC-CE-014', title: 'SQS Queue Depth Increasing', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T11:15:00Z', system: 'AWS SQS', role: 'Cloud Engineer', description: 'Consumer lag increasing on worker queue.', logs: [{ timestamp: '11:15:10', level: 'warn', message: 'ApproximateNumberOfMessagesVisible: 50000' }], timeline: [{ id: '1', timestamp: '11:15:00', action: 'Incident Created', user: 'CloudWatch' }] },
+  { id: 'INC-CE-015', title: 'KMS Key Disabled Error', priority: 'Critical', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T11:30:00Z', system: 'AWS KMS', role: 'Cloud Engineer', description: 'Cannot decrypt database credentials.', logs: [{ timestamp: '11:30:05', level: 'error', message: 'DisabledException: Key is disabled' }], timeline: [{ id: '1', timestamp: '11:30:00', action: 'Incident Created', user: 'CloudTrail' }] },
+  { id: 'INC-CE-016', title: 'Secrets Manager Access Denied', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T11:45:00Z', system: 'Secrets Manager', role: 'Cloud Engineer', description: 'App role missing GetSecretValue permission.', logs: [{ timestamp: '11:45:10', level: 'error', message: 'AccessDeniedException' }], timeline: [{ id: '1', timestamp: '11:45:00', action: 'Incident Created', user: 'CloudTrail' }] },
+  { id: 'INC-CE-017', title: 'AWS Config Non-Compliant Resource', priority: 'Low', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T12:00:00Z', system: 'AWS Config', role: 'Cloud Engineer', description: 'Unencrypted EBS volume detected.', logs: [{ timestamp: '12:00:05', level: 'warn', message: 'EncryptedVolumes: Non-compliant' }], timeline: [{ id: '1', timestamp: '12:00:00', action: 'Incident Created', user: 'AWS Config' }] },
+  { id: 'INC-CE-018', title: 'CloudTrail Logging Disabled', priority: 'Critical', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T12:15:00Z', system: 'CloudTrail', role: 'Cloud Engineer', description: 'Audit logging has been turned off.', logs: [{ timestamp: '12:15:10', level: 'error', message: 'StopLogging event detected' }], timeline: [{ id: '1', timestamp: '12:15:00', action: 'Incident Created', user: 'GuardDuty' }] },
+  { id: 'INC-CE-019', title: 'GuardDuty Threat Detected', priority: 'Critical', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T12:30:00Z', system: 'GuardDuty', role: 'Cloud Engineer', description: 'EC2 instance communicating with known C&C server.', logs: [{ timestamp: '12:30:05', level: 'error', message: 'Backdoor:EC2/C&CActivity.B!DNS' }], timeline: [{ id: '1', timestamp: '12:30:00', action: 'Incident Created', user: 'GuardDuty' }] },
+
+  // DevOps (DO) - 19 Incidents
+  { id: 'INC-DO-001', title: 'Jenkins Master Out of Disk Space', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T13:00:00Z', system: 'Jenkins', role: 'DevOps', description: 'Builds failing due to no space on /var/lib/jenkins.', logs: [{ timestamp: '13:00:05', level: 'error', message: 'No space left on device' }], timeline: [{ id: '1', timestamp: '13:00:00', action: 'Incident Created', user: 'Prometheus' }] },
+  { id: 'INC-DO-002', title: 'Terraform State Lock Conflict', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T13:15:00Z', system: 'Terraform', role: 'DevOps', description: 'State locked by another process.', logs: [{ timestamp: '13:15:10', level: 'error', message: 'Error acquiring the state lock' }], timeline: [{ id: '1', timestamp: '13:15:00', action: 'Incident Created', user: 'CLI' }] },
+  { id: 'INC-DO-003', title: 'Kubernetes Node NotReady', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T13:30:00Z', system: 'Kubernetes', role: 'DevOps', description: 'Node worker-03 is NotReady.', logs: [{ timestamp: '13:30:05', level: 'error', message: 'Kubelet stopped posting node status' }], timeline: [{ id: '1', timestamp: '13:30:00', action: 'Incident Created', user: 'Kubectl' }] },
+  { id: 'INC-DO-004', title: 'Docker Registry Auth Failure', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T13:45:00Z', system: 'Docker', role: 'DevOps', description: 'Cannot pull images from private registry.', logs: [{ timestamp: '13:45:10', level: 'error', message: 'unauthorized: authentication required' }], timeline: [{ id: '1', timestamp: '13:45:00', action: 'Incident Created', user: 'Docker Daemon' }] },
+  { id: 'INC-DO-005', title: 'Git Merge Conflict in Main Branch', priority: 'Low', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T14:00:00Z', system: 'Git', role: 'DevOps', description: 'Automated merge failed.', logs: [{ timestamp: '14:00:05', level: 'warn', message: 'CONFLICT (content): Merge conflict in file.txt' }], timeline: [{ id: '1', timestamp: '14:00:00', action: 'Incident Created', user: 'GitHub' }] },
+  { id: 'INC-DO-006', title: 'Helm Chart Validation Failed', priority: 'Low', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T14:15:00Z', system: 'Helm', role: 'DevOps', description: 'Template syntax error in values.yaml.', logs: [{ timestamp: '14:15:10', level: 'error', message: 'error converting YAML to JSON' }], timeline: [{ id: '1', timestamp: '14:15:00', action: 'Incident Created', user: 'Helm CLI' }] },
+  { id: 'INC-DO-007', title: 'Ansible Playbook SSH Timeout', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T14:30:00Z', system: 'Ansible', role: 'DevOps', description: 'Cannot connect to target hosts.', logs: [{ timestamp: '14:30:05', level: 'error', message: 'Failed to connect to the host via ssh' }], timeline: [{ id: '1', timestamp: '14:30:00', action: 'Incident Created', user: 'Ansible' }] },
+  { id: 'INC-DO-008', title: 'Prometheus Target Down', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T14:45:00Z', system: 'Prometheus', role: 'DevOps', description: 'Metrics endpoint not reachable for api-server.', logs: [{ timestamp: '14:45:10', level: 'error', message: 'Get "http://api:8080/metrics": dial tcp: connection refused' }], timeline: [{ id: '1', timestamp: '14:45:00', action: 'Incident Created', user: 'Prometheus' }] },
+  { id: 'INC-DO-009', title: 'Grafana Dashboard Loading Slow', priority: 'Low', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T15:00:00Z', system: 'Grafana', role: 'DevOps', description: 'High query time for main dashboard.', logs: [{ timestamp: '15:00:05', level: 'warn', message: 'Slow query: 5s' }], timeline: [{ id: '1', timestamp: '15:00:00', action: 'Incident Created', user: 'Grafana' }] },
+  { id: 'INC-DO-010', title: 'ELK Stack Indexing Failure', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T15:15:00Z', system: 'ELK', role: 'DevOps', description: 'Logstash cannot write to Elasticsearch.', logs: [{ timestamp: '15:15:10', level: 'error', message: '403 Forbidden: cluster_block_exception' }], timeline: [{ id: '1', timestamp: '15:15:00', action: 'Incident Created', user: 'Logstash' }] },
+  { id: 'INC-DO-011', title: 'ArgoCD Sync Failed', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T15:30:00Z', system: 'ArgoCD', role: 'DevOps', description: 'Application out of sync, sync failed.', logs: [{ timestamp: '15:30:05', level: 'error', message: 'failed to apply: resource already exists' }], timeline: [{ id: '1', timestamp: '15:30:00', action: 'Incident Created', user: 'ArgoCD' }] },
+  { id: 'INC-DO-012', title: 'Flux Source Controller Error', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T15:45:00Z', system: 'Flux', role: 'DevOps', description: 'Cannot fetch git repository.', logs: [{ timestamp: '15:45:10', level: 'error', message: 'authentication failed' }], timeline: [{ id: '1', timestamp: '15:45:00', action: 'Incident Created', user: 'Flux' }] },
+  { id: 'INC-DO-013', title: 'SonarQube Quality Gate Failed', priority: 'Low', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T16:00:00Z', system: 'SonarQube', role: 'DevOps', description: 'Code coverage below 80%.', logs: [{ timestamp: '16:00:05', level: 'warn', message: 'Quality Gate: FAILED' }], timeline: [{ id: '1', timestamp: '16:00:00', action: 'Incident Created', user: 'SonarQube' }] },
+  { id: 'INC-DO-014', title: 'Vault Unseal Key Missing', priority: 'Critical', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T16:15:00Z', system: 'Vault', role: 'DevOps', description: 'Vault is sealed, cannot access secrets.', logs: [{ timestamp: '16:15:10', level: 'error', message: 'Vault is sealed' }], timeline: [{ id: '1', timestamp: '16:15:00', action: 'Incident Created', user: 'Vault' }] },
+  { id: 'INC-DO-015', title: 'Nexus Repository 503 Service Unavailable', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T16:30:00Z', system: 'Nexus', role: 'DevOps', description: 'Artifact repository down.', logs: [{ timestamp: '16:30:05', level: 'error', message: '503 Service Unavailable' }], timeline: [{ id: '1', timestamp: '16:30:00', action: 'Incident Created', user: 'Nexus' }] },
+  { id: 'INC-DO-016', title: 'Harbor Image Scanning Failed', priority: 'Low', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T16:45:00Z', system: 'Harbor', role: 'DevOps', description: 'Vulnerability scan timed out.', logs: [{ timestamp: '16:45:10', level: 'warn', message: 'Scan failed' }], timeline: [{ id: '1', timestamp: '16:45:00', action: 'Incident Created', user: 'Harbor' }] },
+  { id: 'INC-DO-017', title: 'Spinnaker Pipeline Execution Error', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T17:00:00Z', system: 'Spinnaker', role: 'DevOps', description: 'Deploy stage failed.', logs: [{ timestamp: '17:00:05', level: 'error', message: 'Exception: Failed to deploy' }], timeline: [{ id: '1', timestamp: '17:00:00', action: 'Incident Created', user: 'Spinnaker' }] },
+  { id: 'INC-DO-018', title: 'Tekton TaskRun Failed', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T17:15:00Z', system: 'Tekton', role: 'DevOps', description: 'Build task failed.', logs: [{ timestamp: '17:15:10', level: 'error', message: 'TaskRun failed' }], timeline: [{ id: '1', timestamp: '17:15:00', action: 'Incident Created', user: 'Tekton' }] },
+  { id: 'INC-DO-019', title: 'Kaniko Build Error: Layer Not Found', priority: 'Low', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T17:30:00Z', system: 'Kaniko', role: 'DevOps', description: 'Base image layer missing.', logs: [{ timestamp: '17:30:05', level: 'error', message: 'error building image' }], timeline: [{ id: '1', timestamp: '17:30:00', action: 'Incident Created', user: 'Kaniko' }] },
+
+  // App Support (AS) - 19 Incidents
+  { id: 'INC-AS-001', title: '403 Forbidden on Login', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T18:00:00Z', system: 'Portal Auth', role: 'Application Support Engineer', description: 'Users cannot log in.', logs: [{ timestamp: '18:00:05', level: 'error', message: '403 Forbidden' }], timeline: [{ id: '1', timestamp: '18:00:00', action: 'Incident Created', user: 'Sentry' }] },
+  { id: 'INC-AS-002', title: '500 Internal Server Error: Checkout', priority: 'Critical', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T18:15:00Z', system: 'Checkout Service', role: 'Application Support Engineer', description: 'Payments failing.', logs: [{ timestamp: '18:15:10', level: 'error', message: 'NullPointerException' }], timeline: [{ id: '1', timestamp: '18:15:00', action: 'Incident Created', user: 'Sentry' }] },
+  { id: 'INC-AS-003', title: '502 Bad Gateway: API', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T18:30:00Z', system: 'Nginx', role: 'Application Support Engineer', description: 'Backend service unreachable.', logs: [{ timestamp: '18:30:05', level: 'error', message: '502 Bad Gateway' }], timeline: [{ id: '1', timestamp: '18:30:00', action: 'Incident Created', user: 'Nginx' }] },
+  { id: 'INC-AS-004', title: '504 Gateway Timeout: Reports', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T18:45:00Z', system: 'Reporting Service', role: 'Application Support Engineer', description: 'Report generation timing out.', logs: [{ timestamp: '18:45:10', level: 'error', message: '504 Gateway Timeout' }], timeline: [{ id: '1', timestamp: '18:45:00', action: 'Incident Created', user: 'Nginx' }] },
+  { id: 'INC-AS-005', title: '404 Not Found: Static Assets', priority: 'Low', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T19:00:00Z', system: 'CDN', role: 'Application Support Engineer', description: 'Images not loading.', logs: [{ timestamp: '19:00:05', level: 'warn', message: '404 Not Found' }], timeline: [{ id: '1', timestamp: '19:00:00', action: 'Incident Created', user: 'Browser' }] },
+  { id: 'INC-AS-006', title: 'High Latency in Search', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T19:15:00Z', system: 'Search Service', role: 'Application Support Engineer', description: 'Search results taking > 5s.', logs: [{ timestamp: '19:15:10', level: 'warn', message: 'Response time: 5200ms' }], timeline: [{ id: '1', timestamp: '19:15:00', action: 'Incident Created', user: 'New Relic' }] },
+  { id: 'INC-AS-007', title: 'Database Connection Pool Full', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T19:30:00Z', system: 'PostgreSQL', role: 'Application Support Engineer', description: 'App cannot connect to DB.', logs: [{ timestamp: '19:30:05', level: 'error', message: 'Connection pool exhausted' }], timeline: [{ id: '1', timestamp: '19:30:00', action: 'Incident Created', user: 'App Logs' }] },
+  { id: 'INC-AS-008', title: 'SSL Certificate Expired', priority: 'Critical', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T19:45:00Z', system: 'SSL', role: 'Application Support Engineer', description: 'Site shows security warning.', logs: [{ timestamp: '19:45:10', level: 'error', message: 'Certificate expired' }], timeline: [{ id: '1', timestamp: '19:45:00', action: 'Incident Created', user: 'UptimeRobot' }] },
+  { id: 'INC-AS-009', title: 'Redis Out of Memory', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T20:00:00Z', system: 'Redis', role: 'Application Support Engineer', description: 'Cache cluster full.', logs: [{ timestamp: '20:00:05', level: 'error', message: 'OOM' }], timeline: [{ id: '1', timestamp: '20:00:00', action: 'Incident Created', user: 'Prometheus' }] },
+  { id: 'INC-AS-010', title: 'Disk Full on App Server', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T20:15:00Z', system: 'Linux', role: 'Application Support Engineer', description: 'Logs filled up disk.', logs: [{ timestamp: '20:15:10', level: 'error', message: 'Disk Full' }], timeline: [{ id: '1', timestamp: '20:15:00', action: 'Incident Created', user: 'Zabbix' }] },
+  { id: 'INC-AS-011', title: 'Memory Leak in Worker Process', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T20:30:00Z', system: 'Node.js', role: 'Application Support Engineer', description: 'RSS memory increasing steadily.', logs: [{ timestamp: '20:30:05', level: 'warn', message: 'Memory usage: 90%' }], timeline: [{ id: '1', timestamp: '20:30:00', action: 'Incident Created', user: 'Datadog' }] },
+  { id: 'INC-AS-012', title: 'CPU Spike on Web Server', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T20:45:00Z', system: 'Linux', role: 'Application Support Engineer', description: 'CPU at 100% for 10 mins.', logs: [{ timestamp: '20:45:10', level: 'error', message: 'CPU Load: 15.0' }], timeline: [{ id: '1', timestamp: '20:45:00', action: 'Incident Created', user: 'CloudWatch' }] },
+  { id: 'INC-AS-013', title: 'Database Deadlock Detected', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T21:00:00Z', system: 'MySQL', role: 'Application Support Engineer', description: 'Transactions failing.', logs: [{ timestamp: '21:00:05', level: 'error', message: 'Deadlock found' }], timeline: [{ id: '1', timestamp: '21:00:00', action: 'Incident Created', user: 'MySQL Logs' }] },
+  { id: 'INC-AS-014', title: 'Slow Query in Order History', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T21:15:00Z', system: 'PostgreSQL', role: 'Application Support Engineer', description: 'Missing index on user_id.', logs: [{ timestamp: '21:15:10', level: 'warn', message: 'Slow query: 3s' }], timeline: [{ id: '1', timestamp: '21:15:00', action: 'Incident Created', user: 'PG Stat Statements' }] },
+  { id: 'INC-AS-015', title: 'Cache Miss Rate High', priority: 'Low', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T21:30:00Z', system: 'Redis', role: 'Application Support Engineer', description: 'Performance degraded.', logs: [{ timestamp: '21:30:05', level: 'warn', message: 'Miss rate: 40%' }], timeline: [{ id: '1', timestamp: '21:30:00', action: 'Incident Created', user: 'Redis Insight' }] },
+  { id: 'INC-AS-016', title: 'Rate Limiting Triggered', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T21:45:00Z', system: 'WAF', role: 'Application Support Engineer', description: 'Legitimate traffic blocked.', logs: [{ timestamp: '21:45:10', level: 'warn', message: 'RateLimit: Block' }], timeline: [{ id: '1', timestamp: '21:45:00', action: 'Incident Created', user: 'WAF Logs' }] },
+  { id: 'INC-AS-017', title: 'CORS Policy Error', priority: 'Low', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T22:00:00Z', system: 'Frontend', role: 'Application Support Engineer', description: 'Cross-origin request blocked.', logs: [{ timestamp: '22:00:05', level: 'error', message: 'CORS error' }], timeline: [{ id: '1', timestamp: '22:00:00', action: 'Incident Created', user: 'Browser Console' }] },
+  { id: 'INC-AS-018', title: 'JWT Token Expiry Issue', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T22:15:00Z', system: 'Auth', role: 'Application Support Engineer', description: 'Tokens expiring too fast.', logs: [{ timestamp: '22:15:10', level: 'warn', message: 'Token expired' }], timeline: [{ id: '1', timestamp: '22:15:00', action: 'Incident Created', user: 'App Logs' }] },
+  { id: 'INC-AS-019', title: 'DNS Resolution Failure', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T22:30:00Z', system: 'DNS', role: 'Application Support Engineer', description: 'Cannot resolve api.internal.', logs: [{ timestamp: '22:30:05', level: 'error', message: 'NXDOMAIN' }], timeline: [{ id: '1', timestamp: '22:30:00', action: 'Incident Created', user: 'CoreDNS' }] },
+];
+
+export const mockTutorials: Tutorial[] = [
+  // 50 Tutorials matching incidents
+  { id: 'TUT-001', title: 'Fixing VPC Peering', category: 'Cloud Engineer', difficulty: 'Intermediate', description: 'Restore connectivity between VPCs.', steps: [{ title: 'Check Routes', content: 'Verify route tables point to pcx.' }, { title: 'Check SG', content: 'Allow traffic in Security Groups.' }] },
+  { id: 'TUT-002', title: 'Securing S3 Buckets', category: 'Cloud Engineer', difficulty: 'Beginner', description: 'Fix public access issues.', steps: [{ title: 'Block Public Access', content: 'Enable Block Public Access settings.' }, { title: 'Bucket Policy', content: 'Restrict access to specific IAM roles.' }] },
+  { id: 'TUT-003', title: 'RDS Replica Lag Fix', category: 'Cloud Engineer', difficulty: 'Advanced', description: 'Reduce database replication lag.', steps: [{ title: 'Monitor IOPS', content: 'Check if disk IOPS are exhausted.' }, { title: 'Upgrade Instance', content: 'Increase instance size for more throughput.' }] },
+  { id: 'TUT-004', title: 'Route53 Failover Setup', category: 'Cloud Engineer', difficulty: 'Intermediate', description: 'Configure DNS failover.', steps: [{ title: 'Health Checks', content: 'Create health checks for endpoints.' }, { title: 'Routing Policy', content: 'Set failover routing policy.' }] },
+  { id: 'TUT-005', title: 'CloudFront 504 Debugging', category: 'Cloud Engineer', difficulty: 'Advanced', description: 'Fix origin timeout errors.', steps: [{ title: 'Origin Timeout', content: 'Increase origin response timeout.' }, { title: 'Backend Health', content: 'Check backend server performance.' }] },
+  { id: 'TUT-006', title: 'Lambda Timeout Optimization', category: 'Cloud Engineer', difficulty: 'Intermediate', description: 'Prevent Lambda timeouts.', steps: [{ title: 'Memory Increase', content: 'More memory = more CPU.' }, { title: 'Code Profiling', content: 'Find slow parts of the code.' }] },
+  { id: 'TUT-007', title: 'API Gateway Throttling', category: 'Cloud Engineer', difficulty: 'Beginner', description: 'Manage API rate limits.', steps: [{ title: 'Usage Plans', content: 'Configure usage plans and quotas.' }, { title: 'Burst Limit', content: 'Adjust burst and rate limits.' }] },
+  { id: 'TUT-008', title: 'EC2 Recovery', category: 'Cloud Engineer', difficulty: 'Beginner', description: 'Recover failed EC2 instances.', steps: [{ title: 'Stop/Start', content: 'Move instance to new hardware.' }, { title: 'CloudWatch Alarms', content: 'Set up auto-recovery alarms.' }] },
+  { id: 'TUT-009', title: 'ASG Scaling Optimization', category: 'Cloud Engineer', difficulty: 'Intermediate', description: 'Fix scaling issues.', steps: [{ title: 'Scaling Policies', content: 'Use target tracking policies.' }, { title: 'Instance Types', content: 'Mix instance types for availability.' }] },
+  { id: 'TUT-010', title: 'ELB Health Check Fix', category: 'Cloud Engineer', difficulty: 'Beginner', description: 'Fix unhealthy hosts.', steps: [{ title: 'Health Path', content: 'Verify health check path exists.' }, { title: 'Port Check', content: 'Ensure app is listening on correct port.' }] },
+  { id: 'TUT-011', title: 'EKS Capacity Management', category: 'Cloud Engineer', difficulty: 'Advanced', description: 'Fix node scaling failures.', steps: [{ title: 'Instance Limits', content: 'Check service quotas for instances.' }, { title: 'AZ Balance', content: 'Spread nodes across multiple AZs.' }] },
+  { id: 'TUT-012', title: 'ECS Deployment Debugging', category: 'Cloud Engineer', difficulty: 'Intermediate', description: 'Fix failed ECS tasks.', steps: [{ title: 'Task Logs', content: 'Check CloudWatch logs for task errors.' }, { title: 'Resource Limits', content: 'Increase CPU/Memory in task def.' }] },
+  { id: 'TUT-013', title: 'SNS/SQS Integration', category: 'Cloud Engineer', difficulty: 'Beginner', description: 'Fix message delivery.', steps: [{ title: 'Subscription Filter', content: 'Check if filters are blocking messages.' }, { title: 'Policy Permissions', content: 'Allow SNS to publish to SQS.' }] },
+  { id: 'TUT-014', title: 'SQS Backlog Resolution', category: 'Cloud Engineer', difficulty: 'Intermediate', description: 'Handle high queue depth.', steps: [{ title: 'Scale Consumers', content: 'Add more worker instances/pods.' }, { title: 'Batch Processing', content: 'Increase batch size for efficiency.' }] },
+  { id: 'TUT-015', title: 'KMS Key Management', category: 'Cloud Engineer', difficulty: 'Advanced', description: 'Fix encryption errors.', steps: [{ title: 'Key State', content: 'Enable disabled or pending deletion keys.' }, { title: 'Key Policy', content: 'Grant access to correct IAM principals.' }] },
+  { id: 'TUT-016', title: 'Secrets Manager Setup', category: 'Cloud Engineer', difficulty: 'Beginner', description: 'Securely access secrets.', steps: [{ title: 'IAM Policy', content: 'Add GetSecretValue permission.' }, { title: 'VPC Endpoint', content: 'Access secrets without internet.' }] },
+  { id: 'TUT-017', title: 'AWS Config Remediation', category: 'Cloud Engineer', difficulty: 'Intermediate', description: 'Fix non-compliant resources.', steps: [{ title: 'Auto Remediation', content: 'Configure SSM documents for fixes.' }, { title: 'Manual Fix', content: 'Encrypt volumes or restrict SGs.' }] },
+  { id: 'TUT-018', title: 'CloudTrail Auditing', category: 'Cloud Engineer', difficulty: 'Advanced', description: 'Monitor for suspicious activity.', steps: [{ title: 'Event History', content: 'Search for StopLogging events.' }, { title: 'CloudWatch Logs', content: 'Stream trails to logs for alerting.' }] },
+  { id: 'TUT-019', title: 'GuardDuty Incident Response', category: 'Cloud Engineer', difficulty: 'Advanced', description: 'Handle security threats.', steps: [{ title: 'Isolate Instance', content: 'Change SG to block all traffic.' }, { title: 'Snapshot Volume', content: 'Take snapshot for forensics.' }] },
+  { id: 'TUT-020', title: 'Jenkins Disk Cleanup', category: 'DevOps', difficulty: 'Beginner', description: 'Free up space on Jenkins.', steps: [{ title: 'Discard Old Builds', content: 'Configure build rotation policy.' }, { title: 'Clean Workspace', content: 'Use Workspace Cleanup plugin.' }] },
+  { id: 'TUT-021', title: 'Terraform State Recovery', category: 'DevOps', difficulty: 'Intermediate', description: 'Unlock Terraform state.', steps: [{ title: 'Force Unlock', content: 'Run terraform force-unlock <id>.' }, { title: 'Check Backend', content: 'Verify S3/DynamoDB connectivity.' }] },
+  { id: 'TUT-022', title: 'Kubernetes Node Debugging', category: 'DevOps', difficulty: 'Advanced', description: 'Fix NotReady nodes.', steps: [{ title: 'Describe Node', content: 'Check for DiskPressure or MemoryPressure.' }, { title: 'Kubelet Logs', content: 'Check logs on the node itself.' }] },
+  { id: 'TUT-023', title: 'Docker Auth Setup', category: 'DevOps', difficulty: 'Beginner', description: 'Fix registry pull errors.', steps: [{ title: 'Docker Login', content: 'Run docker login with credentials.' }, { title: 'K8s ImagePullSecrets', content: 'Create and link secrets to service accounts.' }] },
+  { id: 'TUT-024', title: 'Git Conflict Resolution', category: 'DevOps', difficulty: 'Beginner', description: 'Resolve merge conflicts.', steps: [{ title: 'Identify Files', content: 'Run git status to see conflicts.' }, { title: 'Manual Edit', content: 'Fix markers and commit.' }] },
+  { id: 'TUT-025', title: 'Helm Linting', category: 'DevOps', difficulty: 'Beginner', description: 'Fix chart syntax errors.', steps: [{ title: 'Helm Lint', content: 'Run helm lint <chart>.' }, { title: 'Helm Template', content: 'Debug output with helm template.' }] },
+  { id: 'TUT-026', title: 'Ansible SSH Debugging', category: 'DevOps', difficulty: 'Intermediate', description: 'Fix connection issues.', steps: [{ title: 'Check Inventory', content: 'Verify IP addresses and users.' }, { title: 'SSH Keys', content: 'Ensure public key is in authorized_keys.' }] },
+  { id: 'TUT-027', title: 'Prometheus Monitoring Fix', category: 'DevOps', difficulty: 'Intermediate', description: 'Fix target down issues.', steps: [{ title: 'Service Discovery', content: 'Check if labels match targets.' }, { title: 'Network Policy', content: 'Allow Prometheus to scrape pods.' }] },
+  { id: 'TUT-028', title: 'Grafana Query Optimization', category: 'DevOps', difficulty: 'Intermediate', description: 'Speed up dashboards.', steps: [{ title: 'Intervals', content: 'Use larger step intervals for long ranges.' }, { title: 'Pre-aggregation', content: 'Use recording rules in Prometheus.' }] },
+  { id: 'TUT-029', title: 'ELK Cluster Health', category: 'DevOps', difficulty: 'Advanced', description: 'Fix indexing blocks.', steps: [{ title: 'Disk Watermark', content: 'Free up space to remove read-only block.' }, { title: 'Shards Balance', content: 'Reduce number of shards per node.' }] },
+  { id: 'TUT-030', title: 'ArgoCD Sync Debugging', category: 'DevOps', difficulty: 'Intermediate', description: 'Fix sync failures.', steps: [{ title: 'Diff View', content: 'Check the diff in ArgoCD UI.' }, { title: 'Prune Resources', content: 'Enable pruning for deleted resources.' }] },
+  { id: 'TUT-031', title: 'Flux GitOps Setup', category: 'DevOps', difficulty: 'Intermediate', description: 'Fix source errors.', steps: [{ title: 'SSH Secret', content: 'Update git-credentials secret.' }, { title: 'Reconcile', content: 'Force reconcile with flux reconcile.' }] },
+  { id: 'TUT-032', title: 'SonarQube Integration', category: 'DevOps', difficulty: 'Beginner', description: 'Improve code quality.', steps: [{ title: 'Scanner Config', content: 'Add sonar-project.properties.' }, { title: 'Pipeline Stage', content: 'Add SonarQube step to CI.' }] },
+  { id: 'TUT-033', title: 'Vault Unsealing', category: 'DevOps', difficulty: 'Advanced', description: 'Recover sealed Vault.', steps: [{ title: 'Unseal Keys', content: 'Provide threshold number of keys.' }, { title: 'Auto-unseal', content: 'Configure AWS KMS for auto-unseal.' }] },
+  { id: 'TUT-034', title: 'Nexus Maintenance', category: 'DevOps', difficulty: 'Intermediate', description: 'Fix 503 errors.', steps: [{ title: 'Check Logs', content: 'Look for memory or DB issues.' }, { title: 'Blob Store', content: 'Verify blob store integrity.' }] },
+  { id: 'TUT-035', title: 'Harbor Security Scanning', category: 'DevOps', difficulty: 'Beginner', description: 'Fix scan failures.', steps: [{ title: 'Scanner Status', content: 'Check if Trivy/Clair is running.' }, { title: 'Retry Scan', content: 'Manually trigger scan for image.' }] },
+  { id: 'TUT-036', title: 'Spinnaker Debugging', category: 'DevOps', difficulty: 'Advanced', description: 'Fix pipeline errors.', steps: [{ title: 'Orca Logs', content: 'Check orchestration engine logs.' }, { title: 'Cloud Provider', content: 'Verify cloud credentials.' }] },
+  { id: 'TUT-037', title: 'Tekton Pipeline Setup', category: 'DevOps', difficulty: 'Intermediate', description: 'Fix TaskRun failures.', steps: [{ title: 'Workspace', content: 'Ensure PVC is correctly mounted.' }, { title: 'ServiceAccount', content: 'Grant necessary RBAC to pipeline.' }] },
+  { id: 'TUT-038', title: 'Kaniko Build Optimization', category: 'DevOps', difficulty: 'Intermediate', description: 'Fix layer errors.', steps: [{ title: 'Cache', content: 'Enable remote layer caching.' }, { title: 'Context', content: 'Minimize build context size.' }] },
+  { id: 'TUT-039', title: 'App Support: 403 Debugging', category: 'App Support', difficulty: 'Beginner', description: 'Fix access denied errors.', steps: [{ title: 'Check Scopes', content: 'Verify JWT has required roles.' }, { title: 'WAF Rules', content: 'Check if IP is blacklisted.' }] },
+  { id: 'TUT-040', title: 'App Support: 500 Debugging', category: 'App Support', difficulty: 'Intermediate', description: 'Fix server errors.', steps: [{ title: 'Stack Trace', content: 'Find the root cause in logs.' }, { title: 'DB State', content: 'Check for inconsistent data.' }] },
+  { id: 'TUT-041', title: 'App Support: 502 Debugging', category: 'App Support', difficulty: 'Intermediate', description: 'Fix gateway errors.', steps: [{ title: 'Upstream Health', content: 'Check if app is running.' }, { title: 'Nginx Config', content: 'Verify proxy_pass URL.' }] },
+  { id: 'TUT-042', title: 'App Support: 504 Debugging', category: 'App Support', difficulty: 'Intermediate', description: 'Fix timeout errors.', steps: [{ title: 'Timeout Config', content: 'Increase proxy and app timeouts.' }, { title: 'Async Tasks', content: 'Move long tasks to background.' }] },
+  { id: 'TUT-043', title: 'App Support: 404 Debugging', category: 'App Support', difficulty: 'Beginner', description: 'Fix missing assets.', steps: [{ title: 'CDN Purge', content: 'Clear cache for the asset.' }, { title: 'S3 Check', content: 'Verify file exists in bucket.' }] },
+  { id: 'TUT-044', title: 'App Support: Latency Fix', category: 'App Support', difficulty: 'Intermediate', description: 'Improve response times.', steps: [{ title: 'Profiling', content: 'Identify slow functions.' }, { title: 'Caching', content: 'Add Redis for frequent data.' }] },
+  { id: 'TUT-045', title: 'App Support: DB Pool Fix', category: 'App Support', difficulty: 'Intermediate', description: 'Fix connection errors.', steps: [{ title: 'Pool Size', content: 'Increase max connections.' }, { title: 'Leak Detection', content: 'Ensure connections are closed.' }] },
+  { id: 'TUT-046', title: 'App Support: SSL Renewal', category: 'App Support', difficulty: 'Beginner', description: 'Fix expired certs.', steps: [{ title: 'Certbot', content: 'Run certbot renew.' }, { title: 'Manual Upload', content: 'Update cert in ACM/Cloudflare.' }] },
+  { id: 'TUT-047', title: 'App Support: Redis OOM Fix', category: 'App Support', difficulty: 'Intermediate', description: 'Fix cache OOM.', steps: [{ title: 'Eviction Policy', content: 'Set to allkeys-lru.' }, { title: 'TTL', content: 'Ensure all keys have expiry.' }] },
+  { id: 'TUT-048', title: 'App Support: Disk Cleanup', category: 'App Support', difficulty: 'Beginner', description: 'Free up server space.', steps: [{ title: 'Log Rotation', content: 'Enable logrotate.' }, { title: 'Temp Files', content: 'Clean /tmp and cache dirs.' }] },
+  { id: 'TUT-049', title: 'App Support: Memory Leak Fix', category: 'App Support', difficulty: 'Advanced', description: 'Fix app crashes.', steps: [{ title: 'Heap Dump', content: 'Analyze dump with Chrome DevTools.' }, { title: 'GC Logs', content: 'Check garbage collection frequency.' }] },
+  { id: 'TUT-050', title: 'App Support: CPU Optimization', category: 'App Support', difficulty: 'Intermediate', description: 'Reduce CPU usage.', steps: [{ title: 'Top/Htop', content: 'Identify high CPU threads.' }, { title: 'Algorithm Fix', content: 'Optimize expensive loops.' }] },
 ];
 
 export const systemHealth: SystemHealth[] = [
@@ -154,58 +129,10 @@ export const systemHealth: SystemHealth[] = [
 ];
 
 export const mockDatabases: DatabaseInstance[] = [
-  {
-    id: 'db-001',
-    name: 'Inventory-DB-Prod',
-    type: 'PostgreSQL',
-    status: 'healthy',
-    connections: 142,
-    maxConnections: 500,
-    cpuUsage: 24,
-    memoryUsage: 62,
-    storageUsed: 450,
-    storageTotal: 1000,
-    region: 'us-east-1'
-  },
-  {
-    id: 'db-002',
-    name: 'User-Session-Cache',
-    type: 'Redis',
-    status: 'healthy',
-    connections: 1240,
-    maxConnections: 5000,
-    cpuUsage: 12,
-    memoryUsage: 85,
-    storageUsed: 12,
-    storageTotal: 32,
-    region: 'eu-west-1'
-  },
-  {
-    id: 'db-003',
-    name: 'Customer-Analytics',
-    type: 'MongoDB',
-    status: 'degraded',
-    connections: 85,
-    maxConnections: 200,
-    cpuUsage: 88,
-    memoryUsage: 92,
-    storageUsed: 1800,
-    storageTotal: 2000,
-    region: 'us-west-2'
-  },
-  {
-    id: 'db-004',
-    name: 'ORCL_PROD',
-    type: 'Oracle',
-    status: 'healthy',
-    connections: 45,
-    maxConnections: 200,
-    cpuUsage: 18,
-    memoryUsage: 45,
-    storageUsed: 120,
-    storageTotal: 500,
-    region: 'eu-central-1'
-  }
+  { id: 'db-001', name: 'Inventory-DB-Prod', type: 'PostgreSQL', status: 'healthy', connections: 142, maxConnections: 500, cpuUsage: 24, memoryUsage: 62, storageUsed: 450, storageTotal: 1000, region: 'us-east-1' },
+  { id: 'db-002', name: 'User-Session-Cache', type: 'Redis', status: 'healthy', connections: 1240, maxConnections: 5000, cpuUsage: 12, memoryUsage: 85, storageUsed: 12, storageTotal: 32, region: 'eu-west-1' },
+  { id: 'db-003', name: 'Customer-Analytics', type: 'MongoDB', status: 'degraded', connections: 85, maxConnections: 200, cpuUsage: 88, memoryUsage: 92, storageUsed: 1800, storageTotal: 2000, region: 'us-west-2' },
+  { id: 'db-004', name: 'ORCL_PROD', type: 'Oracle', status: 'healthy', connections: 45, maxConnections: 200, cpuUsage: 18, memoryUsage: 45, storageUsed: 120, storageTotal: 500, region: 'eu-central-1' }
 ];
 
 export const mockQueries: QueryPerformance[] = [
@@ -219,41 +146,9 @@ export const initialFileSystem: FileSystemItem = {
   name: '/',
   type: 'dir',
   children: {
-    'etc': {
-      name: 'etc',
-      type: 'dir',
-      children: {
-        'hosts': { name: 'hosts', type: 'file', content: '127.0.0.1 localhost\n10.0.0.5 sap-gateway\n10.0.0.10 db-prod' },
-        'resolv.conf': { name: 'resolv.conf', type: 'file', content: 'nameserver 8.8.8.8' }
-      }
-    },
-    'var': {
-      name: 'var',
-      type: 'dir',
-      children: {
-        'log': {
-          name: 'log',
-          type: 'dir',
-          children: {
-            'syslog': { name: 'syslog', type: 'file', content: 'Apr 13 10:00:01 ops-node systemd[1]: Starting Periodic Command Scheduler...\nApr 13 10:05:12 ops-node kernel: [ 123.456] eth0: link up, 1000Mbps' },
-            'nginx.log': { name: 'nginx.log', type: 'file', content: '127.0.0.1 - - [13/Apr/2024:10:00:01 +0000] "GET /health HTTP/1.1" 200 2' }
-          }
-        }
-      }
-    },
-    'home': {
-      name: 'home',
-      type: 'dir',
-      children: {
-        'admin': {
-          name: 'admin',
-          type: 'dir',
-          children: {
-            'readme.txt': { name: 'readme.txt', type: 'file', content: 'Welcome to OpsCenter Terminal.\nUse "help" to see available commands.' }
-          }
-        }
-      }
-    }
+    'etc': { name: 'etc', type: 'dir', children: { 'hosts': { name: 'hosts', type: 'file', content: '127.0.0.1 localhost\n10.0.0.5 sap-gateway\n10.0.0.10 db-prod' }, 'resolv.conf': { name: 'resolv.conf', type: 'file', content: 'nameserver 8.8.8.8' } } },
+    'var': { name: 'var', type: 'dir', children: { 'log': { name: 'log', type: 'dir', children: { 'syslog': { name: 'syslog', type: 'file', content: 'Apr 13 10:00:01 ops-node systemd[1]: Starting Periodic Command Scheduler...\nApr 13 10:05:12 ops-node kernel: [ 123.456] eth0: link up, 1000Mbps' }, 'nginx.log': { name: 'nginx.log', type: 'file', content: '127.0.0.1 - - [13/Apr/2024:10:00:01 +0000] "GET /health HTTP/1.1" 200 2' } } } } },
+    'home': { name: 'home', type: 'dir', children: { 'admin': { name: 'admin', type: 'dir', children: { 'readme.txt': { name: 'readme.txt', type: 'file', content: 'Welcome to OpsCenter Terminal.\nUse "help" to see available commands.' } } } } }
   }
 };
 
