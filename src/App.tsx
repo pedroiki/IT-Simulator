@@ -75,7 +75,12 @@ import {
   Monitor,
   CreditCard,
   ShoppingCart,
-  Share2
+  Share2,
+  GraduationCap,
+  Palette,
+  Type,
+  Maximize2,
+  Timer
 } from 'lucide-react';
 import { 
   ReactFlow, 
@@ -117,8 +122,8 @@ import {
 } from 'recharts';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { mockIncidents, systemHealth, mockDatabases, mockQueries, initialFileSystem, portalProducts, portalClients, portalCompanies, mockTutorials } from './mockData';
-import { Incident, Priority, Status, DatabaseInstance, FileSystemItem, Tutorial } from './types';
+import { mockIncidents, systemHealth, mockDatabases, mockQueries, initialFileSystem, portalProducts, portalClients, portalCompanies, mockTutorials, toolScenarios, knowledgeQuestions } from './mockData';
+import { Incident, Priority, Status, DatabaseInstance, FileSystemItem, Tutorial, ToolScenario, KnowledgeQuestion, AssistantSettings } from './types';
 import { cn } from '@/lib/utils';
 
 // --- Components ---
@@ -137,6 +142,7 @@ const Sidebar = ({ activeTab, setActiveTab }: { activeTab: string, setActiveTab:
     { id: 'tutorials', icon: BookOpen, label: 'Tutoriais' },
     { id: 'calendar', icon: CalendarIcon, label: 'Calendário' },
     { id: 'ai', icon: Zap, label: 'AI Assistant' },
+    { id: 'knowledge', icon: GraduationCap, label: 'Knowledge' },
     { id: 'portal', icon: ShoppingBag, label: 'Portal' },
     { id: 'oracle', icon: Database, label: 'Oracle' },
     { id: 'edi', icon: Network, label: 'EDI Integrations' },
@@ -760,9 +766,12 @@ const CalendarView = () => {
   );
 };
 
-const TutorialsView = () => {
-  const [selectedTutorial, setSelectedTutorial] = useState(mockTutorials[0].id);
+interface TutorialsViewProps {
+  selectedTutorial: string;
+  setSelectedTutorial: (id: string) => void;
+}
 
+const TutorialsView = ({ selectedTutorial, setSelectedTutorial }: TutorialsViewProps) => {
   const currentTutorial = mockTutorials.find(t => t.id === selectedTutorial);
 
   return (
@@ -1875,7 +1884,12 @@ const OracleView = () => {
   );
 };
 
-const AIView = () => {
+interface AIViewProps {
+  assistantSettings: AssistantSettings;
+  setAssistantSettings: React.Dispatch<React.SetStateAction<AssistantSettings>>;
+}
+
+const AIView = ({ assistantSettings, setAssistantSettings }: AIViewProps) => {
   const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -1911,17 +1925,102 @@ const AIView = () => {
 
   return (
     <div className="flex flex-col h-full max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-4 mb-4">
-        <div className="p-3 bg-yellow-400 rounded-2xl shadow-lg shadow-yellow-100">
-          <Zap className="w-8 h-8 text-slate-900" />
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-yellow-400 rounded-2xl shadow-lg shadow-yellow-100">
+            <Zap className="w-8 h-8 text-slate-900" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">SRE AI Assistant</h1>
+            <p className="text-slate-500 font-medium">Powered by Gemini - Especialista em Infraestrutura</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">SRE AI Assistant</h1>
-          <p className="text-slate-500 font-medium">Powered by Gemini - Especialista em Infraestrutura</p>
-        </div>
+        <Popover>
+          <PopoverTrigger>
+            <Button variant="outline" size="icon" className="rounded-full">
+              <Palette className="w-5 h-5" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-6">
+            <div className="space-y-6">
+              <h3 className="font-bold text-lg flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Personalização
+              </h3>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Cor Primária</label>
+                  <div className="flex gap-2">
+                    {['#16a34a', '#2563eb', '#9333ea', '#dc2626', '#ea580c'].map(color => (
+                      <button
+                        key={color}
+                        onClick={() => setAssistantSettings(prev => ({ ...prev, primaryColor: color }))}
+                        className={cn(
+                          "w-8 h-8 rounded-full border-2 transition-all",
+                          assistantSettings.primaryColor === color ? "border-slate-900 scale-110" : "border-transparent"
+                        )}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Tipografia</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { name: 'Sans', value: 'Inter, sans-serif' },
+                      { name: 'Mono', value: 'JetBrains Mono, monospace' },
+                      { name: 'Serif', value: 'Playfair Display, serif' },
+                      { name: 'Outfit', value: 'Outfit, sans-serif' }
+                    ].map(font => (
+                      <Button
+                        key={font.name}
+                        variant={assistantSettings.fontFamily === font.value ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setAssistantSettings(prev => ({ ...prev, fontFamily: font.value }))}
+                        className="text-xs"
+                      >
+                        {font.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Fundo</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['solid', 'gradient', 'transparent'].map(type => (
+                      <Button
+                        key={type}
+                        variant={assistantSettings.backgroundType === type ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setAssistantSettings(prev => ({ ...prev, backgroundType: type as any }))}
+                        className="text-[10px] capitalize"
+                      >
+                        {type}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
-      <Card className="flex-1 flex flex-col rounded-3xl border-2 border-slate-100 shadow-sm overflow-hidden bg-slate-50/30">
+      <Card 
+        className="flex-1 flex flex-col rounded-3xl border-2 border-slate-100 shadow-sm overflow-hidden"
+        style={{ 
+          fontFamily: assistantSettings.fontFamily,
+          background: assistantSettings.backgroundType === 'gradient' 
+            ? `linear-gradient(135deg, ${assistantSettings.backgroundColor}, #f8fafc)`
+            : assistantSettings.backgroundType === 'transparent'
+            ? 'transparent'
+            : assistantSettings.backgroundColor
+        }}
+      >
         <ScrollArea className="h-full p-6">
           <div className="space-y-6">
             {chatHistory.length === 0 && (
@@ -1960,7 +2059,10 @@ const AIView = () => {
                   "w-10 h-10 border-2",
                   msg.role === 'user' ? "border-slate-200" : "border-yellow-400"
                 )}>
-                  <AvatarFallback className={msg.role === 'user' ? "bg-slate-100" : "bg-yellow-400 text-slate-900 font-bold"}>
+                  <AvatarFallback 
+                    className={msg.role === 'user' ? "bg-slate-100" : "text-white font-bold"}
+                    style={msg.role === 'ai' ? { backgroundColor: assistantSettings.primaryColor } : {}}
+                  >
                     {msg.role === 'user' ? 'U' : 'AI'}
                   </AvatarFallback>
                 </Avatar>
@@ -1985,7 +2087,12 @@ const AIView = () => {
             {isLoading && (
               <div className="flex gap-4">
                 <Avatar className="w-10 h-10 border-2 border-yellow-400 animate-pulse">
-                  <AvatarFallback className="bg-yellow-400 text-slate-900 font-bold">AI</AvatarFallback>
+                  <AvatarFallback 
+                    className="text-white font-bold"
+                    style={{ backgroundColor: assistantSettings.primaryColor }}
+                  >
+                    AI
+                  </AvatarFallback>
                 </Avatar>
                 <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm">
                   <div className="flex gap-1">
@@ -2016,7 +2123,8 @@ const AIView = () => {
             <Button 
               onClick={handleAskAI}
               disabled={isLoading || !prompt.trim()}
-              className="absolute bottom-4 right-4 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold rounded-xl px-6"
+              className="absolute bottom-4 right-4 text-white font-bold rounded-xl px-6"
+              style={{ backgroundColor: assistantSettings.primaryColor }}
             >
               <Send className="w-4 h-4 mr-2" />
               Enviar
@@ -2956,6 +3064,41 @@ Content-Length: 45
 
 const ToolsView = ({ isApacheRunning, setIsApacheRunning, addLog }: { isApacheRunning: boolean, setIsApacheRunning: (v: boolean) => void, addLog: (m: string) => void }) => {
   const [selectedTool, setSelectedTool] = useState('apache');
+  const [scenarioIndices, setScenarioIndices] = useState<Record<string, number>>({
+    'apache': 0,
+    'ansible': 0,
+    'terraform': 0,
+    'docker': 0,
+    'aws': 0,
+    'prometheus': 0,
+    'grafana': 0,
+    'soapui': 0,
+    'bonita': 0,
+    'sap': 0,
+    'pipeline': 0
+  });
+
+  const toolMapping: Record<string, string> = {
+    'apache': 'Apache Server',
+    'ansible': 'Ansible',
+    'terraform': 'Terraform',
+    'docker': 'Docker',
+    'aws': 'AWS',
+    'prometheus': 'Prometheus',
+    'grafana': 'Grafana',
+    'soapui': 'Soap UI',
+    'bonita': 'Bonita BPM',
+    'sap': 'SAP ERP',
+    'pipeline': 'CI/CD Pipeline'
+  };
+
+  const handleRefreshScenario = (toolId: string) => {
+    setScenarioIndices(prev => ({
+      ...prev,
+      [toolId]: (prev[toolId] + 1) % 5
+    }));
+    addLog(`[TOOLS] Refreshing scenario for ${toolMapping[toolId]}...`);
+  };
   const [ansibleScript, setAnsibleScript] = useState(`- name: Install and configure Nginx
   hosts: webservers
   become: yes
@@ -3116,52 +3259,85 @@ const ToolsView = ({ isApacheRunning, setIsApacheRunning, addLog }: { isApacheRu
     { id: 'pipeline', label: 'CI/CD Pipeline', icon: RefreshCw, color: 'text-blue-600', bg: 'bg-blue-50' },
   ];
 
+  const ToolHeader = ({ title, icon: Icon, colorClass, toolId, children }: { title: string, icon: any, colorClass: string, toolId: string, children?: React.ReactNode }) => {
+    const scenario = toolScenarios[toolMapping[toolId]][scenarioIndices[toolId]];
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg", colorClass)}>
+              <Icon className="w-10 h-10" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-black">{title}</h3>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-xs font-bold uppercase tracking-wider text-green-600">Active</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button 
+              variant="outline"
+              size="sm"
+              className="rounded-xl"
+              onClick={() => handleRefreshScenario(toolId)}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" /> Refresh Scenario
+            </Button>
+            {children}
+          </div>
+        </div>
+
+        <div className="bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cenário Ativo</span>
+            <Badge variant="secondary" className="text-[10px] font-bold">
+              {scenario.metric}: {scenario.value}
+            </Badge>
+          </div>
+          <h4 className="text-lg font-bold text-slate-900 mb-1">{scenario.title}</h4>
+          <p className="text-sm text-slate-500 leading-relaxed">{scenario.description}</p>
+        </div>
+      </div>
+    );
+  };
+
   const renderSimulation = () => {
     switch (selectedTool) {
       case 'apache':
         return (
           <div className="space-y-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
-                  <Server className="w-10 h-10" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-black">Apache HTTP Server</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className={cn("w-2 h-2 rounded-full animate-pulse", isApacheRunning ? "bg-green-500" : "bg-red-500")} />
-                    <span className={cn("text-xs font-bold uppercase tracking-wider", isApacheRunning ? "text-green-600" : "text-red-600")}>
-                      {isApacheRunning ? 'Running' : 'Stopped'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Button 
-                  onClick={() => {
-                    setIsApacheRunning(true);
-                    addLog("[APACHE] Starting httpd service...");
-                    setTimeout(() => addLog("[APACHE] httpd started successfully. Port 80 is listening."), 500);
-                  }}
-                  disabled={isApacheRunning}
-                  className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-6"
-                >
-                  <Play className="w-4 h-4 mr-2" /> Start
-                </Button>
-                <Button 
-                  onClick={() => {
-                    setIsApacheRunning(false);
-                    addLog("[APACHE] Stopping httpd service...");
-                    setTimeout(() => addLog("[APACHE] httpd stopped. Port 80 is closed."), 500);
-                  }}
-                  disabled={!isApacheRunning}
-                  variant="destructive"
-                  className="rounded-xl px-6"
-                >
-                  <XCircle className="w-4 h-4 mr-2" /> Stop
-                </Button>
-              </div>
-            </div>
+            <ToolHeader 
+              title="Apache HTTP Server" 
+              icon={Server} 
+              colorClass="bg-red-600" 
+              toolId="apache"
+            >
+              <Button 
+                onClick={() => {
+                  setIsApacheRunning(true);
+                  addLog("[APACHE] Starting httpd service...");
+                  setTimeout(() => addLog("[APACHE] httpd started successfully. Port 80 is listening."), 500);
+                }}
+                disabled={isApacheRunning}
+                className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-6"
+              >
+                <Play className="w-4 h-4 mr-2" /> Start
+              </Button>
+              <Button 
+                onClick={() => {
+                  setIsApacheRunning(false);
+                  addLog("[APACHE] Stopping httpd service...");
+                  setTimeout(() => addLog("[APACHE] httpd stopped. Port 80 is closed."), 500);
+                }}
+                disabled={!isApacheRunning}
+                variant="destructive"
+                className="rounded-xl px-6"
+              >
+                <XCircle className="w-4 h-4 mr-2" /> Stop
+              </Button>
+            </ToolHeader>
 
             <div className="grid grid-cols-3 gap-6">
               <Card className="bg-slate-50 border-slate-200">
@@ -3209,12 +3385,16 @@ const ToolsView = ({ isApacheRunning, setIsApacheRunning, addLog }: { isApacheRu
       case 'ansible':
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold">Ansible Playbook Editor</h3>
+            <ToolHeader 
+              title="Ansible Playbook Editor" 
+              icon={FileCode} 
+              colorClass="bg-red-500" 
+              toolId="ansible"
+            >
               <Button size="sm" className="bg-red-600 hover:bg-red-700">
                 <Play className="w-4 h-4 mr-2" /> Run Playbook
               </Button>
-            </div>
+            </ToolHeader>
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
                 <p className="text-xs font-bold text-slate-400 uppercase">site.yml</p>
@@ -3245,13 +3425,17 @@ const ToolsView = ({ isApacheRunning, setIsApacheRunning, addLog }: { isApacheRu
       case 'terraform':
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold">Terraform Cloud Console</h3>
+            <ToolHeader 
+              title="Terraform Cloud Console" 
+              icon={Zap} 
+              colorClass="bg-purple-600" 
+              toolId="terraform"
+            >
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">Plan</Button>
                 <Button size="sm" className="bg-purple-600 hover:bg-purple-700">Apply</Button>
               </div>
-            </div>
+            </ToolHeader>
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
                 <p className="text-xs font-bold text-slate-400 uppercase">main.tf</p>
@@ -3286,7 +3470,12 @@ const ToolsView = ({ isApacheRunning, setIsApacheRunning, addLog }: { isApacheRu
       case 'docker':
         return (
           <div className="space-y-6">
-            <h3 className="text-lg font-bold">Docker Container Management</h3>
+            <ToolHeader 
+              title="Docker Container Management" 
+              icon={Container} 
+              colorClass="bg-blue-600" 
+              toolId="docker"
+            />
             <div className="grid grid-cols-1 gap-4">
               {[
                 { name: 'nginx-proxy', image: 'nginx:latest', status: 'Running', ports: '80:80, 443:443', cpu: '0.5%', mem: '45MB', icon: 'https://cdn.worldvectorlogo.com/logos/nginx-1.svg' },
@@ -3369,11 +3558,12 @@ const ToolsView = ({ isApacheRunning, setIsApacheRunning, addLog }: { isApacheRu
       case 'aws':
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold">AWS Management Console (Simulated)</h3>
-              <Badge className="bg-orange-500">Region: us-east-1</Badge>
-            </div>
-            
+            <ToolHeader 
+              title="AWS Management Console" 
+              icon={Cloud} 
+              colorClass="bg-orange-500" 
+              toolId="aws"
+            />
             <div className="grid grid-cols-3 gap-6">
               {/* EC2 Section */}
               <Card className="col-span-2">
@@ -3502,7 +3692,12 @@ const ToolsView = ({ isApacheRunning, setIsApacheRunning, addLog }: { isApacheRu
       case 'prometheus':
         return (
           <div className="space-y-6">
-            <h3 className="text-lg font-bold">Prometheus Query Browser</h3>
+            <ToolHeader 
+              title="Prometheus Query Browser" 
+              icon={Activity} 
+              colorClass="bg-orange-600" 
+              toolId="prometheus"
+            />
             <div className="flex gap-2">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -3556,13 +3751,12 @@ const ToolsView = ({ isApacheRunning, setIsApacheRunning, addLog }: { isApacheRu
       case 'grafana':
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold">Grafana Dashboard: System Overview</h3>
-              <div className="flex gap-2">
-                <Badge variant="outline">Last 6 hours</Badge>
-                <RefreshCw className="w-4 h-4 text-slate-400" />
-              </div>
-            </div>
+            <ToolHeader 
+              title="Grafana Dashboard: System Overview" 
+              icon={BarChart3} 
+              colorClass="bg-yellow-600" 
+              toolId="grafana"
+            />
             <div className="grid grid-cols-2 gap-6">
               <Card className="h-48 bg-slate-900 border-slate-800 flex items-center justify-center">
                 <div className="text-center">
@@ -3650,15 +3844,16 @@ const ToolsView = ({ isApacheRunning, setIsApacheRunning, addLog }: { isApacheRu
       case 'soapui':
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold">Soap UI - Web Service Tester</h3>
-              <div className="flex gap-2">
-                <Badge className="bg-blue-600">WSDL: http://jardinagem.portal/services?wsdl</Badge>
-                <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                  <Play className="w-4 h-4 mr-2" /> Send Request
-                </Button>
-              </div>
-            </div>
+            <ToolHeader 
+              title="Soap UI - Web Service Tester" 
+              icon={Globe} 
+              colorClass="bg-blue-600" 
+              toolId="soapui"
+            >
+              <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                <Play className="w-4 h-4 mr-2" /> Send Request
+              </Button>
+            </ToolHeader>
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
                 <p className="text-xs font-bold text-slate-400 uppercase">Request XML</p>
@@ -3698,12 +3893,16 @@ const ToolsView = ({ isApacheRunning, setIsApacheRunning, addLog }: { isApacheRu
       case 'bonita':
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold">Bonita BPM - Process Management</h3>
+            <ToolHeader 
+              title="Bonita BPM - Process Management" 
+              icon={Layers} 
+              colorClass="bg-green-600" 
+              toolId="bonita"
+            >
               <Button size="sm" className="bg-green-600 hover:bg-green-700">
                 <Plus className="w-4 h-4 mr-2" /> New Case
               </Button>
-            </div>
+            </ToolHeader>
             <div className="grid grid-cols-3 gap-6">
               <Card className="col-span-1">
                 <CardHeader className="pb-2">
@@ -3757,11 +3956,12 @@ const ToolsView = ({ isApacheRunning, setIsApacheRunning, addLog }: { isApacheRu
       case 'sap':
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-blue-800 rounded flex items-center justify-center text-white font-bold text-xl italic">SAP</div>
-                <h3 className="text-lg font-bold">SAP Easy Access - Portal Integration</h3>
-              </div>
+            <ToolHeader 
+              title="SAP Easy Access - Portal Integration" 
+              icon={Database} 
+              colorClass="bg-blue-800" 
+              toolId="sap"
+            >
               <div className="flex gap-2">
                 <div className="flex items-center bg-slate-100 rounded px-2 border">
                   <span className="text-[10px] font-bold text-slate-400 mr-2">T-Code:</span>
@@ -3773,7 +3973,7 @@ const ToolsView = ({ isApacheRunning, setIsApacheRunning, addLog }: { isApacheRu
                 </div>
                 <Button size="sm" className="bg-blue-800 hover:bg-blue-900">Execute</Button>
               </div>
-            </div>
+            </ToolHeader>
             <Card className="border-2 border-blue-200 shadow-lg overflow-hidden">
               <div className="bg-slate-200 px-4 py-1 border-b border-slate-300 flex items-center gap-4 text-[10px] font-bold text-slate-600">
                 <span>Menu</span>
@@ -3857,16 +4057,12 @@ const ToolsView = ({ isApacheRunning, setIsApacheRunning, addLog }: { isApacheRu
       case 'pipeline':
         return (
           <div className="space-y-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
-                  <RefreshCw className={cn("w-10 h-10", pipelineStatus === 'running' && "animate-spin")} />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-black">Infrastructure CI/CD Pipeline</h3>
-                  <p className="text-slate-500 text-sm">Automated deployment for Portal de Jardinagem</p>
-                </div>
-              </div>
+            <ToolHeader 
+              title="Infrastructure CI/CD Pipeline" 
+              icon={RefreshCw} 
+              colorClass="bg-blue-600" 
+              toolId="pipeline"
+            >
               <Button 
                 onClick={handleRunPipeline}
                 disabled={pipelineStatus === 'running'}
@@ -3884,8 +4080,7 @@ const ToolsView = ({ isApacheRunning, setIsApacheRunning, addLog }: { isApacheRu
                   </>
                 )}
               </Button>
-            </div>
-
+            </ToolHeader>
             <div className="grid grid-cols-1 gap-4">
               {pipelineSteps.map((step, index) => (
                 <Card key={step.id} className={cn(
@@ -4085,12 +4280,16 @@ const EDIIntegrationView = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const [selectedPartner, setSelectedPartner] = useState<any>(null);
+
   const companies = portalCompanies.map(c => ({
     name: c.nome,
     type: ['Vortex Coffee Systems', 'Nebula Brew Corp'].includes(c.nome) ? 'Email' : 'FTP',
     color: ['Vortex Coffee Systems', 'Nebula Brew Corp'].includes(c.nome) ? 'text-orange-500' : 'text-cyan-500',
     bg: ['Vortex Coffee Systems', 'Nebula Brew Corp'].includes(c.nome) ? 'bg-orange-50' : 'bg-cyan-50',
-    border: ['Vortex Coffee Systems', 'Nebula Brew Corp'].includes(c.nome) ? 'border-orange-200' : 'border-cyan-200'
+    border: ['Vortex Coffee Systems', 'Nebula Brew Corp'].includes(c.nome) ? 'border-orange-200' : 'border-cyan-200',
+    status: Math.random() > 0.1 ? 'Online' : 'Latency',
+    lastSync: '2m ago'
   }));
 
   return (
@@ -4209,24 +4408,57 @@ const EDIIntegrationView = () => {
                 {/* Partners List */}
                 <div className="absolute right-12 top-0 bottom-0 flex flex-col justify-center gap-4">
                   {companies.map((company, i) => (
-                    <motion.div
-                      key={company.name}
-                      initial={{ opacity: 0, x: 50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      className={cn(
-                        "flex items-center gap-3 p-3 rounded-2xl bg-white border-2 shadow-sm w-48 transition-all hover:scale-105 cursor-pointer",
-                        company.border
-                      )}
-                    >
-                      <div className={cn("p-2 rounded-lg", company.bg)}>
-                        <User className={cn("w-4 h-4", company.color)} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">{company.name}</p>
-                        <p className={cn("text-[10px] font-bold uppercase tracking-tighter", company.color)}>{company.type}</p>
-                      </div>
-                    </motion.div>
+                    <Popover key={company.name}>
+                      <PopoverTrigger>
+                        <motion.div
+                          initial={{ opacity: 0, x: 50 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.1 }}
+                          className={cn(
+                            "flex items-center gap-3 p-3 rounded-2xl bg-white border-2 shadow-sm w-48 transition-all hover:scale-105 cursor-pointer",
+                            company.border
+                          )}
+                        >
+                          <div className={cn("p-2 rounded-lg", company.bg)}>
+                            <User className={cn("w-4 h-4", company.color)} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-900">{company.name}</p>
+                            <p className={cn("text-[10px] font-bold uppercase tracking-tighter", company.color)}>{company.type}</p>
+                          </div>
+                        </motion.div>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 p-4 rounded-2xl border-2 border-slate-100 shadow-xl">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-bold text-slate-900">{company.name}</h4>
+                            <Badge variant={company.status === 'Online' ? 'secondary' : 'outline'} className={cn(
+                              "text-[10px]",
+                              company.status === 'Online' ? "bg-green-100 text-green-700 border-none" : "bg-yellow-100 text-yellow-700 border-none"
+                            )}>
+                              {company.status}
+                            </Badge>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-[10px]">
+                              <span className="text-slate-400">Protocolo:</span>
+                              <span className="font-bold">{company.type}</span>
+                            </div>
+                            <div className="flex justify-between text-[10px]">
+                              <span className="text-slate-400">Última Sincronização:</span>
+                              <span className="font-bold">{company.lastSync}</span>
+                            </div>
+                            <div className="flex justify-between text-[10px]">
+                              <span className="text-slate-400">Endpoint:</span>
+                              <span className="font-mono">{company.type === 'FTP' ? 'ftp.partner.com' : 'orders@partner.com'}</span>
+                            </div>
+                          </div>
+                          <Button size="sm" className="w-full h-8 text-[10px] rounded-lg" onClick={() => setActiveTab('folders')}>
+                            Ver Ficheiros
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   ))}
                 </div>
               </div>
@@ -4326,7 +4558,13 @@ const EDIIntegrationView = () => {
   );
 };
 
-const InfrastructureView = ({ isApacheRunning }: { isApacheRunning: boolean }) => {
+const InfrastructureView = ({ isApacheRunning, isFailoverActive, setIsFailoverActive, autoHealingEnabled, setAutoHealingEnabled }: { 
+  isApacheRunning: boolean;
+  isFailoverActive: boolean;
+  setIsFailoverActive: (v: boolean) => void;
+  autoHealingEnabled: boolean;
+  setAutoHealingEnabled: (v: boolean) => void;
+}) => {
   const infoData = {
     waf: {
       title: "AWS WAF",
@@ -4404,9 +4642,27 @@ const InfrastructureView = ({ isApacheRunning }: { isApacheRunning: boolean }) =
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Infrastructure Architecture</h1>
-          <p className="text-slate-500">Live architectural map of the production environment.</p>
+          <p className="text-slate-500">High Availability & Fault Tolerance Monitoring.</p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant={autoHealingEnabled ? "default" : "outline"}
+            size="sm"
+            onClick={() => setAutoHealingEnabled(!autoHealingEnabled)}
+            className={cn("gap-2 rounded-xl", autoHealingEnabled ? "bg-green-600 hover:bg-green-700" : "")}
+          >
+            <Zap className={cn("w-4 h-4", autoHealingEnabled ? "fill-current" : "")} />
+            {autoHealingEnabled ? "Auto-Healing ON" : "Auto-Healing OFF"}
+          </Button>
+          <Button 
+            variant={isFailoverActive ? "destructive" : "outline"}
+            size="sm"
+            onClick={() => setIsFailoverActive(!isFailoverActive)}
+            className="gap-2 rounded-xl"
+          >
+            <Shield className={cn("w-4 h-4", isFailoverActive ? "fill-current" : "")} />
+            {isFailoverActive ? "Failover Active (Region B)" : "Trigger Failover"}
+          </Button>
           <Badge variant="outline" className={cn(
             "border-2",
             isApacheRunning ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"
@@ -4417,231 +4673,139 @@ const InfrastructureView = ({ isApacheRunning }: { isApacheRunning: boolean }) =
         </div>
       </div>
 
-      <Card className="bg-slate-50/50 border-slate-200 overflow-hidden">
-        <CardContent className="p-12">
-          <div className="relative flex flex-col items-center gap-12">
-            {/* Layer 1: Users */}
+      <div className="bg-slate-950 rounded-[2.5rem] p-12 relative overflow-hidden shadow-2xl border-4 border-slate-800">
+        {/* Background Grid */}
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #3b82f6 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+        
+        {/* Failover Region Indicator */}
+        <AnimatePresence>
+          {isFailoverActive && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="absolute top-4 right-4 z-50 bg-red-600 text-white px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-lg animate-pulse"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              RUNNING ON SECONDARY REGION (EU-WEST-1)
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="relative z-10 flex flex-col items-center gap-16">
+          {/* Layer 1: Edge */}
+          <div className="flex gap-12">
+            <InfoItem id="waf">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-16 h-16 rounded-2xl bg-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                  <Shield className="w-8 h-8 text-white" />
+                </div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">WAF</span>
+              </div>
+            </InfoItem>
+            <div className="w-px h-16 bg-gradient-to-b from-transparent via-slate-700 to-transparent self-center" />
+            <InfoItem id="cloudfront">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-16 h-16 rounded-2xl bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                  <Globe className="w-8 h-8 text-white" />
+                </div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">CloudFront</span>
+              </div>
+            </InfoItem>
+          </div>
+
+          {/* Connection Lines */}
+          <div className="w-1 h-12 bg-gradient-to-b from-blue-500 to-indigo-500" />
+
+          {/* Layer 2: Load Balancer */}
+          <InfoItem id="alb">
             <div className="flex flex-col items-center gap-2">
-              <div className="w-12 h-12 bg-white rounded-full border-2 border-slate-200 flex items-center justify-center shadow-sm">
-                <Globe className="w-6 h-6 text-slate-400" />
+              <div className="w-20 h-20 rounded-3xl bg-indigo-600 flex items-center justify-center shadow-xl shadow-indigo-500/30 border-2 border-indigo-400">
+                <Network className="w-10 h-10 text-white" />
               </div>
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Public Internet</span>
+              <span className="text-xs font-black text-indigo-400 uppercase tracking-tighter">App Load Balancer</span>
             </div>
+          </InfoItem>
 
-            <ArrowRight className="w-6 h-6 text-slate-300 rotate-90" />
+          {/* Connection Lines to Clusters */}
+          <div className="flex gap-48 -mt-8">
+            <div className={cn("w-32 h-16 border-t-2 border-l-2 border-indigo-500/50 rounded-tl-3xl", isFailoverActive ? "opacity-20" : "opacity-100")} />
+            <div className={cn("w-32 h-16 border-t-2 border-r-2 border-indigo-500/50 rounded-tr-3xl", isFailoverActive ? "opacity-100" : "opacity-20")} />
+          </div>
 
-            {/* Layer 2: Edge */}
-            <div className="grid grid-cols-2 gap-24 relative">
-              <div className="flex flex-col items-center gap-3">
-                <InfoItem id="waf">
-                  <div className="w-24 h-24 bg-white rounded-2xl border-2 border-blue-100 flex flex-col items-center justify-center shadow-sm hover:border-blue-500 transition-all group">
-                    <Shield className="w-8 h-8 text-blue-600 mb-1" />
-                    <span className="text-[10px] font-bold uppercase text-blue-600">AWS WAF</span>
-                  </div>
-                </InfoItem>
-                <Badge variant="secondary" className="bg-green-100 text-green-700">Active</Badge>
+          {/* Layer 3: Compute Clusters */}
+          <div className="flex gap-24">
+            {/* Primary Cluster */}
+            <div className={cn("flex flex-col items-center gap-8 transition-all duration-700", isFailoverActive ? "opacity-30 grayscale scale-90" : "opacity-100")}>
+              <div className="px-4 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
+                <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">Region A (Primary)</span>
               </div>
-              <div className="flex flex-col items-center gap-3">
-                <InfoItem id="cloudfront">
-                  <div className="w-24 h-24 bg-white rounded-2xl border-2 border-blue-100 flex flex-col items-center justify-center shadow-sm hover:border-blue-500 transition-all group">
-                    <Layers className="w-8 h-8 text-blue-600 mb-1" />
-                    <span className="text-[10px] font-bold uppercase text-blue-600">CloudFront</span>
-                  </div>
-                </InfoItem>
-                <Badge variant="secondary" className="bg-green-100 text-green-700">99.9% Cache Hit</Badge>
-              </div>
-              
-              {/* Connection Line */}
-              <div className="absolute top-1/2 left-1/4 right-1/4 h-px bg-slate-200 -z-10" />
-            </div>
-
-            <ArrowRight className="w-6 h-6 text-slate-300 rotate-90" />
-
-            {/* Layer 3: Load Balancing & Web Server */}
-            <div className="flex flex-col items-center gap-6">
-              <div className="flex gap-12 items-center">
-                <div className="flex flex-col items-center gap-3">
-                  <InfoItem id="alb">
-                    <div className="w-32 h-20 bg-blue-600 rounded-xl flex flex-col items-center justify-center shadow-lg text-white">
-                      <RefreshCw className="w-6 h-6 mb-1" />
-                      <span className="text-[10px] font-bold uppercase">App Load Balancer</span>
-                    </div>
-                  </InfoItem>
-                  <p className="text-[10px] font-mono text-slate-400">alb-prod-01.aws.com</p>
-                </div>
-
-                <ArrowRight className="w-6 h-6 text-slate-300" />
-
-                <div className="flex flex-col items-center gap-3">
-                  <InfoItem id="apache">
+              <div className="flex gap-8">
+                <InfoItem id="apache">
+                  <div className="flex flex-col items-center gap-2">
                     <div className={cn(
-                      "w-32 h-20 rounded-xl flex flex-col items-center justify-center shadow-lg text-white transition-all",
-                      isApacheRunning ? "bg-red-600" : "bg-slate-400 grayscale"
+                      "w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-500",
+                      isApacheRunning ? "bg-slate-800 shadow-slate-900/50 border border-slate-700" : "bg-red-900/50 shadow-red-900/20 border border-red-500 animate-pulse"
                     )}>
-                      <Server className="w-6 h-6 mb-1" />
-                      <span className="text-[10px] font-bold uppercase">Apache HTTPD</span>
+                      <Server className={cn("w-8 h-8", isApacheRunning ? "text-white" : "text-red-500")} />
                     </div>
-                  </InfoItem>
-                  <Badge variant="outline" className={cn(
-                    "text-[8px] uppercase",
-                    isApacheRunning ? "text-green-600 border-green-200" : "text-red-600 border-red-200"
-                  )}>
-                    {isApacheRunning ? "Running" : "Stopped"}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-
-            <div className="w-full max-w-4xl h-px bg-slate-200 relative">
-              <div className="absolute top-0 left-1/4 w-px h-12 bg-slate-200" />
-              <div className="absolute top-0 left-1/2 w-px h-12 bg-slate-200" />
-              <div className="absolute top-0 left-3/4 w-px h-12 bg-slate-200" />
-            </div>
-
-            {/* Layer 4: Compute (EKS) */}
-            <div className="grid grid-cols-3 gap-12 w-full max-w-5xl">
-              <InfoItem id="frontend">
-                <div className="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm space-y-4 h-full">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                      <Cpu className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold">Portal Frontend</h4>
-                      <p className="text-[10px] text-slate-500">React / Vite / Tailwind</p>
-                    </div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">Apache</span>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-[10px]">
-                      <span className="text-slate-500">Replicas</span>
-                      <span className="font-bold">6 / 6</span>
+                </InfoItem>
+                <InfoItem id="api">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center shadow-lg shadow-slate-900/50 border border-slate-700">
+                      <Cpu className="w-8 h-8 text-white" />
                     </div>
-                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-green-500 w-full" />
-                    </div>
-                  </div>
-                </div>
-              </InfoItem>
-
-              <InfoItem id="api">
-                <div className="bg-white p-6 rounded-2xl border-2 border-blue-500 shadow-md space-y-4 relative ring-4 ring-blue-50 h-full">
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-blue-600">Primary API</Badge>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                      <Activity className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold">Portal API</h4>
-                      <p className="text-[10px] text-slate-500">Node.js / Express / Oracle</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-[10px]">
-                      <span className="text-slate-500">Throughput</span>
-                      <span className="font-bold">12.4k req/s</span>
-                    </div>
-                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500 w-[85%]" />
-                    </div>
-                  </div>
-                </div>
-              </InfoItem>
-
-              <InfoItem id="auth">
-                <div className="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm space-y-4 h-full">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold">Auth Service</h4>
-                      <p className="text-[10px] text-slate-500">Go / OAuth2</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-[10px]">
-                      <span className="text-slate-500">Latency</span>
-                      <span className="font-bold">12ms</span>
-                    </div>
-                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-green-500 w-full" />
-                    </div>
-                  </div>
-                </div>
-              </InfoItem>
-            </div>
-
-            <div className="w-full max-w-4xl h-px bg-slate-200 relative">
-              <div className="absolute bottom-0 left-1/4 w-px h-12 bg-slate-200" />
-              <div className="absolute bottom-0 left-3/4 w-px h-12 bg-slate-200" />
-            </div>
-
-            {/* Layer 5: Data, External & Security */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 w-full max-w-7xl">
-              <div className="space-y-4">
-                <h5 className="text-[10px] font-bold text-slate-400 uppercase text-center">Persistence Layer</h5>
-                <div className="grid grid-cols-2 gap-4">
-                  <InfoItem id="oracle">
-                    <div className="bg-slate-900 text-white p-4 rounded-xl flex flex-col items-center gap-2 shadow-lg border border-red-900 w-full">
-                      <Database className="w-6 h-6 text-red-500" />
-                      <span className="text-[10px] font-bold uppercase">Oracle 19c</span>
-                    </div>
-                  </InfoItem>
-                  <InfoItem id="redis">
-                    <div className="bg-slate-900 text-white p-4 rounded-xl flex flex-col items-center gap-2 shadow-lg border border-orange-900 w-full">
-                      <HardDrive className="w-6 h-6 text-orange-400" />
-                      <span className="text-[10px] font-bold uppercase">Redis Cache</span>
-                    </div>
-                  </InfoItem>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h5 className="text-[10px] font-bold text-slate-400 uppercase text-center">Security & Monitoring</h5>
-                <InfoItem id="cyber">
-                  <div className="bg-slate-900 text-white p-6 rounded-2xl border-2 border-red-600 shadow-xl relative overflow-hidden group h-full">
-                    <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-100 transition-opacity">
-                      <Shield className="w-12 h-12 text-red-600" />
-                    </div>
-                    <div className="relative z-10">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Shield className="w-5 h-5 text-red-500" />
-                        <span className="text-xs font-bold uppercase tracking-widest">Cybersecurity Hub</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="text-[8px] bg-slate-800 p-1.5 rounded border border-slate-700">Nmap Scanner</div>
-                        <div className="text-[8px] bg-slate-800 p-1.5 rounded border border-slate-700">WAF Interceptor</div>
-                        <div className="text-[8px] bg-slate-800 p-1.5 rounded border border-slate-700">Metasploit Console</div>
-                        <div className="text-[8px] bg-slate-800 p-1.5 rounded border border-slate-700">Hashcat Engine</div>
-                      </div>
-                    </div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">API Node</span>
                   </div>
                 </InfoItem>
               </div>
+            </div>
 
-              <div className="space-y-4">
-                <h5 className="text-[10px] font-bold text-slate-400 uppercase text-center">External Integrations</h5>
-                <div className="grid grid-cols-2 gap-4">
-                  <InfoItem id="jardim">
-                    <div className="bg-blue-50 border-2 border-blue-500 p-4 rounded-xl flex flex-col items-center gap-2 shadow-sm ring-4 ring-blue-50/50 w-full">
-                      <Server className="w-6 h-6 text-blue-600" />
-                      <span className="text-[9px] font-bold text-center leading-tight">JardimPartner<br/>Integration</span>
-                    </div>
-                  </InfoItem>
-                  <InfoItem id="edi">
-                    <div className="bg-white border-2 border-slate-100 p-4 rounded-xl flex flex-col items-center gap-2 w-full">
-                      <Network className="w-6 h-6 text-cyan-500" />
-                      <span className="text-[9px] font-bold uppercase">EDI Partners</span>
-                    </div>
-                  </InfoItem>
+            {/* Secondary Cluster (Failover) */}
+            <div className={cn("flex flex-col items-center gap-8 transition-all duration-700", isFailoverActive ? "opacity-100 scale-105" : "opacity-30 grayscale scale-90")}>
+              <div className={cn("px-4 py-1 rounded-full border", isFailoverActive ? "bg-red-500/20 border-red-500/40" : "bg-slate-800/50 border-slate-700")}>
+                <span className={cn("text-[10px] font-bold uppercase tracking-widest", isFailoverActive ? "text-red-400" : "text-slate-500")}>Region B (Failover)</span>
+              </div>
+              <div className="flex gap-8">
+                <div className="flex flex-col items-center gap-2">
+                  <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg border", isFailoverActive ? "bg-slate-800 border-red-500 shadow-red-900/20" : "bg-slate-900 border-slate-800")}>
+                    <Server className={cn("w-8 h-8", isFailoverActive ? "text-white" : "text-slate-700")} />
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Apache (S)</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg border", isFailoverActive ? "bg-slate-800 border-red-500 shadow-red-900/20" : "bg-slate-900 border-slate-800")}>
+                    <Cpu className="w-8 h-8 text-white" />
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">API Node (S)</span>
                 </div>
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Layer 4: Data Layer */}
+          <div className="flex gap-16">
+            <InfoItem id="redis">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-16 h-16 rounded-2xl bg-red-600 flex items-center justify-center shadow-lg shadow-red-900/20">
+                  <Zap className="w-8 h-8 text-white" />
+                </div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Redis</span>
+              </div>
+            </InfoItem>
+            <InfoItem id="oracle">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-20 h-20 rounded-3xl bg-red-700 flex items-center justify-center shadow-xl shadow-red-900/30 border-2 border-red-500">
+                  <Database className="w-10 h-10 text-white" />
+                </div>
+                <span className="text-xs font-black text-red-500 uppercase tracking-tighter">Oracle 19c RAC</span>
+              </div>
+            </InfoItem>
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
@@ -4888,6 +5052,179 @@ const chartData = [
   { time: '23:59', incidents: 1, health: 97 },
 ];
 
+const KnowledgeView = () => {
+  const [selectedRole, setSelectedRole] = useState<'Cloud Engineer' | 'Application Support Engineer' | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [showResults, setShowResults] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
+
+  const filteredQuestions = knowledgeQuestions.filter(q => q.role === selectedRole);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (selectedRole && !showResults && timeLeft > 0) {
+      timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [selectedRole, showResults, timeLeft]);
+
+  const handleAnswer = (questionId: string, optionIndex: number) => {
+    setAnswers(prev => ({ ...prev, [questionId]: optionIndex }));
+    if (currentQuestionIndex < filteredQuestions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    } else {
+      setShowResults(true);
+    }
+  };
+
+  const calculateScore = () => {
+    let correct = 0;
+    filteredQuestions.forEach(q => {
+      if (answers[q.id] === q.correctAnswer) correct++;
+    });
+    return Math.round((correct / filteredQuestions.length) * 100);
+  };
+
+  const score = calculateScore();
+  const passed = score >= 75;
+
+  if (!selectedRole) {
+    return (
+      <div className="h-full flex items-center justify-center p-8 bg-slate-50">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Avaliação Técnica Knowledge</CardTitle>
+            <CardDescription>Selecione o seu perfil para iniciar o teste de entrevista real.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button 
+              variant="outline" 
+              className="w-full h-16 text-lg gap-4 justify-start px-6 hover:border-blue-500 hover:bg-blue-50"
+              onClick={() => setSelectedRole('Cloud Engineer')}
+            >
+              <Cloud className="w-6 h-6 text-blue-600" />
+              Cloud Engineer
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full h-16 text-lg gap-4 justify-start px-6 hover:border-green-500 hover:bg-green-50"
+              onClick={() => setSelectedRole('Application Support Engineer')}
+            >
+              <Monitor className="w-6 h-6 text-green-600" />
+              Application Support Engineer
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (showResults) {
+    return (
+      <div className="h-full flex items-center justify-center p-8 bg-slate-50 overflow-y-auto">
+        <Card className="w-full max-w-2xl">
+          <CardHeader className="text-center">
+            <CardTitle className="text-3xl font-bold">Resultado da Avaliação</CardTitle>
+            <CardDescription>Perfil: {selectedRole}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-8 text-center">
+            <div className="relative w-48 h-48 mx-auto">
+              <svg className="w-full h-full" viewBox="0 0 100 100">
+                <circle className="text-slate-200 stroke-current" strokeWidth="8" fill="transparent" r="40" cx="50" cy="50" />
+                <circle 
+                  className={cn("stroke-current transition-all duration-1000", passed ? "text-green-500" : "text-red-500")}
+                  strokeWidth="8" 
+                  strokeDasharray={`${score * 2.51} 251`}
+                  strokeLinecap="round" 
+                  fill="transparent" 
+                  r="40" cx="50" cy="50" 
+                  transform="rotate(-90 50 50)"
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-4xl font-bold">{score}%</span>
+                <span className="text-xs font-medium text-slate-500 uppercase">Score Final</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className={cn("text-2xl font-bold", passed ? "text-green-600" : "text-red-600")}>
+                {passed ? "Aprovado - Pronto para a Entrevista" : "Reprovado - Recomendamos rever os Tutoriais"}
+              </h3>
+              <p className="text-slate-500">
+                {passed 
+                  ? "Excelente desempenho! Demonstrou domínio técnico sobre cenários reais." 
+                  : "Ainda há espaço para melhoria. Foque nos guias de resolução de incidentes."}
+              </p>
+            </div>
+
+            <div className="flex gap-4 justify-center">
+              <Button onClick={() => {
+                setSelectedRole(null);
+                setShowResults(false);
+                setAnswers({});
+                setCurrentQuestionIndex(0);
+                setTimeLeft(300);
+              }}>Tentar Novamente</Button>
+              <Button variant="outline">Rever Respostas</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const currentQuestion = filteredQuestions[currentQuestionIndex];
+
+  return (
+    <div className="h-full flex flex-col bg-white">
+      <div className="border-b px-8 py-4 flex items-center justify-between bg-slate-50">
+        <div className="flex items-center gap-4">
+          <Badge variant="secondary" className="bg-blue-100 text-blue-700">{selectedRole}</Badge>
+          <span className="text-sm font-medium text-slate-500">Questão {currentQuestionIndex + 1} de {filteredQuestions.length}</span>
+        </div>
+        <div className="flex items-center gap-2 text-slate-600">
+          <Timer className="w-4 h-4" />
+          <span className="font-mono font-bold">
+            {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex-1 flex items-center justify-center p-8">
+        <motion.div 
+          key={currentQuestion.id}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="w-full max-w-2xl space-y-8"
+        >
+          <h2 className="text-2xl font-bold text-slate-900 leading-tight">
+            {currentQuestion.text}
+          </h2>
+
+          <div className="grid gap-4">
+            {currentQuestion.options.map((option, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleAnswer(currentQuestion.id, idx)}
+                className="w-full p-6 text-left rounded-xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all group relative overflow-hidden"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-full border-2 border-slate-200 flex items-center justify-center group-hover:border-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                    {String.fromCharCode(65 + idx)}
+                  </div>
+                  <span className="text-lg font-medium text-slate-700 group-hover:text-slate-900">{option}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(mockIncidents[0]);
@@ -4903,6 +5240,35 @@ export default function App() {
   ]);
 
   const [isApacheRunning, setIsApacheRunning] = useState(true);
+  const [isFailoverActive, setIsFailoverActive] = useState(false);
+  const [autoHealingEnabled, setAutoHealingEnabled] = useState(true);
+  const [assistantSettings, setAssistantSettings] = useState<AssistantSettings>({
+    primaryColor: '#16a34a',
+    secondaryColor: '#1e293b',
+    accentColor: '#22c55e',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '14px',
+    backgroundType: 'solid',
+    backgroundColor: '#ffffff'
+  });
+
+  const [selectedTutorial, setSelectedTutorial] = useState(mockTutorials[0].id);
+
+  useEffect(() => {
+    if (!autoHealingEnabled) return;
+    
+    const interval = setInterval(() => {
+      if (!isApacheRunning) {
+        addLog("AUTO-HEALING: Detecting service failure (Apache)...");
+        setTimeout(() => {
+          setIsApacheRunning(true);
+          addLog("AUTO-HEALING: Apache service recovered successfully.");
+        }, 3000);
+      }
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, [isApacheRunning, autoHealingEnabled]);
 
   const addLog = (msg: string) => {
     setTerminalLogs(prev => [...prev.slice(-100), msg]);
@@ -4976,12 +5342,22 @@ export default function App() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h1 className="text-2xl font-bold tracking-tight">Portal Operations Dashboard</h1>
-                      <p className="text-slate-500">Real-time overview of Jardinagem Portal health and active incidents.</p>
+                      <p className="text-slate-500">O seu Jardim em 2026 — Real-time overview of Jardinagem Portal health.</p>
                     </div>
-                    <Button variant="outline" className="gap-2">
-                      <RefreshCw className="w-4 h-4" />
-                      Refresh Data
-                    </Button>
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-green-500 shadow-lg">
+                        <img 
+                          src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJ6eXp6eXp6eXp6eXp6eXp6eXp6eXp6eXp6eXp6eXp6ZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKDkDbIDJieKbVm/giphy.gif" 
+                          alt="Family in Garden" 
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                      <Button variant="outline" className="gap-2">
+                        <RefreshCw className="w-4 h-4" />
+                        Refresh Data
+                      </Button>
+                    </div>
                   </div>
 
                   {/* KPI Cards */}
@@ -5237,6 +5613,19 @@ export default function App() {
                                   </Badge>
                                   <PriorityBadge priority={selectedIncident.priority} />
                                   <StatusBadge status={selectedIncident.status} />
+                                  {selectedIncident.tutorialId && (
+                                    <Button 
+                                      variant="link" 
+                                      className="text-blue-600 h-auto p-0 font-bold gap-1"
+                                      onClick={() => {
+                                        setSelectedTutorial(selectedIncident.tutorialId!);
+                                        setActiveTab('tutorials');
+                                      }}
+                                    >
+                                      <BookOpen className="w-4 h-4" />
+                                      Ver Guia de Resolução
+                                    </Button>
+                                  )}
                                 </div>
                                 <h1 className="text-2xl font-bold text-slate-900">{selectedIncident.title}</h1>
                               </div>
@@ -5379,7 +5768,13 @@ export default function App() {
                             <TabsContent value="infrastructure" className="h-full m-0">
                               <ScrollArea className="h-full">
                                 <div className="p-4">
-                                  <InfrastructureView isApacheRunning={isApacheRunning} />
+                                  <InfrastructureView 
+                                    isApacheRunning={isApacheRunning} 
+                                    isFailoverActive={isFailoverActive}
+                                    setIsFailoverActive={setIsFailoverActive}
+                                    autoHealingEnabled={autoHealingEnabled}
+                                    setAutoHealingEnabled={setAutoHealingEnabled}
+                                  />
                                 </div>
                               </ScrollArea>
                             </TabsContent>
@@ -5404,7 +5799,13 @@ export default function App() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <InfrastructureView isApacheRunning={isApacheRunning} />
+                <InfrastructureView 
+                  isApacheRunning={isApacheRunning} 
+                  isFailoverActive={isFailoverActive}
+                  setIsFailoverActive={setIsFailoverActive}
+                  autoHealingEnabled={autoHealingEnabled}
+                  setAutoHealingEnabled={setAutoHealingEnabled}
+                />
               </motion.div>
             </div>
           )}
@@ -5492,7 +5893,10 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 className="h-full"
               >
-                <TutorialsView />
+                <TutorialsView 
+                  selectedTutorial={selectedTutorial}
+                  setSelectedTutorial={setSelectedTutorial}
+                />
               </motion.div>
             </div>
           )}
@@ -5516,7 +5920,22 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 className="h-full"
               >
-                <AIView />
+                <AIView 
+                  assistantSettings={assistantSettings} 
+                  setAssistantSettings={setAssistantSettings} 
+                />
+              </motion.div>
+            </div>
+          )}
+
+          {activeTab === 'knowledge' && (
+            <div className="flex-1 flex flex-col min-h-0">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="h-full"
+              >
+                <KnowledgeView />
               </motion.div>
             </div>
           )}

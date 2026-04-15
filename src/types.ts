@@ -11,6 +11,7 @@ export interface Incident {
   description: string;
   system: string;
   role: 'Cloud Engineer' | 'DevOps' | 'Application Support Engineer';
+  tutorialId?: string;
   logs: LogEntry[];
   timeline: TimelineEvent[];
 }
@@ -71,4 +72,30 @@ export interface Tutorial {
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   description: string;
   steps: { title: string; content: string }[];
+}
+
+export interface ToolScenario {
+  title: string;
+  description: string;
+  metric: string;
+  value: string;
+}
+
+export interface KnowledgeQuestion {
+  id: string;
+  text: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+  role: 'Cloud Engineer' | 'Application Support Engineer';
+}
+
+export interface AssistantSettings {
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  fontFamily: string;
+  fontSize: string;
+  backgroundType: 'solid' | 'gradient' | 'transparent';
+  backgroundColor: string;
 }

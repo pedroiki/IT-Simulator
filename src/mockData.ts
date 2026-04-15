@@ -1,10 +1,10 @@
-import { Incident, SystemHealth, DatabaseInstance, QueryPerformance, FileSystemItem, Tutorial } from './types';
+import { Incident, SystemHealth, DatabaseInstance, QueryPerformance, FileSystemItem, Tutorial, ToolScenario, KnowledgeQuestion } from './types';
 
 export const mockIncidents: Incident[] = [
   // Cloud Engineer (CE) - 19 Incidents
-  { id: 'INC-CE-001', title: 'VPC Peering Connectivity Loss', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T08:00:00Z', system: 'AWS VPC', role: 'Cloud Engineer', description: 'Prod and Staging VPCs cannot communicate.', logs: [{ timestamp: '08:00:05', level: 'error', message: 'VPC Peering pcx-123 status: disconnected' }], timeline: [{ id: '1', timestamp: '08:00:00', action: 'Incident Created', user: 'CloudWatch' }] },
-  { id: 'INC-CE-002', title: 'S3 Bucket Policy Misconfiguration', priority: 'Critical', status: 'In Progress', assignee: 'CR7', createdAt: '2024-04-14T08:15:00Z', system: 'AWS S3', role: 'Cloud Engineer', description: 'Public access detected on private bucket.', logs: [{ timestamp: '08:15:10', level: 'error', message: 'Config Rule: S3_BUCKET_PUBLIC_READ_PROHIBITED non-compliant' }], timeline: [{ id: '1', timestamp: '08:15:00', action: 'Incident Created', user: 'AWS Config' }] },
-  { id: 'INC-CE-003', title: 'RDS Read Replica Lag', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T08:30:00Z', system: 'AWS RDS', role: 'Cloud Engineer', description: 'Replica lag exceeding 300 seconds.', logs: [{ timestamp: '08:30:05', level: 'warn', message: 'ReplicaLag: 350s' }], timeline: [{ id: '1', timestamp: '08:30:00', action: 'Incident Created', user: 'CloudWatch' }] },
+  { id: 'INC-CE-001', title: 'VPC Peering Connectivity Loss', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T08:00:00Z', system: 'AWS VPC', role: 'Cloud Engineer', tutorialId: 'TUT-001', description: 'Prod and Staging VPCs cannot communicate.', logs: [{ timestamp: '08:00:05', level: 'error', message: 'VPC Peering pcx-123 status: disconnected' }], timeline: [{ id: '1', timestamp: '08:00:00', action: 'Incident Created', user: 'CloudWatch' }] },
+  { id: 'INC-CE-002', title: 'S3 Bucket Policy Misconfiguration', priority: 'Critical', status: 'In Progress', assignee: 'CR7', createdAt: '2024-04-14T08:15:00Z', system: 'AWS S3', role: 'Cloud Engineer', tutorialId: 'TUT-002', description: 'Public access detected on private bucket.', logs: [{ timestamp: '08:15:10', level: 'error', message: 'Config Rule: S3_BUCKET_PUBLIC_READ_PROHIBITED non-compliant' }], timeline: [{ id: '1', timestamp: '08:15:00', action: 'Incident Created', user: 'AWS Config' }] },
+  { id: 'INC-CE-003', title: 'RDS Read Replica Lag', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T08:30:00Z', system: 'AWS RDS', role: 'Cloud Engineer', tutorialId: 'TUT-003', description: 'Replica lag exceeding 300 seconds.', logs: [{ timestamp: '08:30:05', level: 'warn', message: 'ReplicaLag: 350s' }], timeline: [{ id: '1', timestamp: '08:30:00', action: 'Incident Created', user: 'CloudWatch' }] },
   { id: 'INC-CE-004', title: 'Route53 Health Check Failed', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T08:45:00Z', system: 'Route 53', role: 'Cloud Engineer', description: 'Primary endpoint unhealthy, failover triggered.', logs: [{ timestamp: '08:45:10', level: 'error', message: 'HealthCheck Status: Unhealthy' }], timeline: [{ id: '1', timestamp: '08:45:00', action: 'Incident Created', user: 'Route53' }] },
   { id: 'INC-CE-005', title: 'CloudFront 504 Gateway Timeout', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T09:00:00Z', system: 'CloudFront', role: 'Cloud Engineer', description: 'Origin taking too long to respond.', logs: [{ timestamp: '09:00:05', level: 'error', message: 'OriginTimeout: 504' }], timeline: [{ id: '1', timestamp: '09:00:00', action: 'Incident Created', user: 'CloudFront' }] },
   { id: 'INC-CE-006', title: 'Lambda Execution Timeout', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T09:15:00Z', system: 'AWS Lambda', role: 'Cloud Engineer', description: 'Image processing function timing out.', logs: [{ timestamp: '09:15:10', level: 'error', message: 'Task timed out after 30.03 seconds' }], timeline: [{ id: '1', timestamp: '09:15:00', action: 'Incident Created', user: 'CloudWatch' }] },
@@ -23,9 +23,9 @@ export const mockIncidents: Incident[] = [
   { id: 'INC-CE-019', title: 'GuardDuty Threat Detected', priority: 'Critical', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T12:30:00Z', system: 'GuardDuty', role: 'Cloud Engineer', description: 'EC2 instance communicating with known C&C server.', logs: [{ timestamp: '12:30:05', level: 'error', message: 'Backdoor:EC2/C&CActivity.B!DNS' }], timeline: [{ id: '1', timestamp: '12:30:00', action: 'Incident Created', user: 'GuardDuty' }] },
 
   // DevOps (DO) - 19 Incidents
-  { id: 'INC-DO-001', title: 'Jenkins Master Out of Disk Space', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T13:00:00Z', system: 'Jenkins', role: 'DevOps', description: 'Builds failing due to no space on /var/lib/jenkins.', logs: [{ timestamp: '13:00:05', level: 'error', message: 'No space left on device' }], timeline: [{ id: '1', timestamp: '13:00:00', action: 'Incident Created', user: 'Prometheus' }] },
-  { id: 'INC-DO-002', title: 'Terraform State Lock Conflict', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T13:15:00Z', system: 'Terraform', role: 'DevOps', description: 'State locked by another process.', logs: [{ timestamp: '13:15:10', level: 'error', message: 'Error acquiring the state lock' }], timeline: [{ id: '1', timestamp: '13:15:00', action: 'Incident Created', user: 'CLI' }] },
-  { id: 'INC-DO-003', title: 'Kubernetes Node NotReady', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T13:30:00Z', system: 'Kubernetes', role: 'DevOps', description: 'Node worker-03 is NotReady.', logs: [{ timestamp: '13:30:05', level: 'error', message: 'Kubelet stopped posting node status' }], timeline: [{ id: '1', timestamp: '13:30:00', action: 'Incident Created', user: 'Kubectl' }] },
+  { id: 'INC-DO-001', title: 'Jenkins Master Out of Disk Space', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T13:00:00Z', system: 'Jenkins', role: 'DevOps', tutorialId: 'TUT-020', description: 'Builds failing due to no space on /var/lib/jenkins.', logs: [{ timestamp: '13:00:05', level: 'error', message: 'No space left on device' }], timeline: [{ id: '1', timestamp: '13:00:00', action: 'Incident Created', user: 'Prometheus' }] },
+  { id: 'INC-DO-002', title: 'Terraform State Lock Conflict', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T13:15:00Z', system: 'Terraform', role: 'DevOps', tutorialId: 'TUT-021', description: 'State locked by another process.', logs: [{ timestamp: '13:15:10', level: 'error', message: 'Error acquiring the state lock' }], timeline: [{ id: '1', timestamp: '13:15:00', action: 'Incident Created', user: 'CLI' }] },
+  { id: 'INC-DO-003', title: 'Kubernetes Node NotReady', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T13:30:00Z', system: 'Kubernetes', role: 'DevOps', tutorialId: 'TUT-022', description: 'Node worker-03 is NotReady.', logs: [{ timestamp: '13:30:05', level: 'error', message: 'Kubelet stopped posting node status' }], timeline: [{ id: '1', timestamp: '13:30:00', action: 'Incident Created', user: 'Kubectl' }] },
   { id: 'INC-DO-004', title: 'Docker Registry Auth Failure', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T13:45:00Z', system: 'Docker', role: 'DevOps', description: 'Cannot pull images from private registry.', logs: [{ timestamp: '13:45:10', level: 'error', message: 'unauthorized: authentication required' }], timeline: [{ id: '1', timestamp: '13:45:00', action: 'Incident Created', user: 'Docker Daemon' }] },
   { id: 'INC-DO-005', title: 'Git Merge Conflict in Main Branch', priority: 'Low', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T14:00:00Z', system: 'Git', role: 'DevOps', description: 'Automated merge failed.', logs: [{ timestamp: '14:00:05', level: 'warn', message: 'CONFLICT (content): Merge conflict in file.txt' }], timeline: [{ id: '1', timestamp: '14:00:00', action: 'Incident Created', user: 'GitHub' }] },
   { id: 'INC-DO-006', title: 'Helm Chart Validation Failed', priority: 'Low', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T14:15:00Z', system: 'Helm', role: 'DevOps', description: 'Template syntax error in values.yaml.', logs: [{ timestamp: '14:15:10', level: 'error', message: 'error converting YAML to JSON' }], timeline: [{ id: '1', timestamp: '14:15:00', action: 'Incident Created', user: 'Helm CLI' }] },
@@ -44,9 +44,9 @@ export const mockIncidents: Incident[] = [
   { id: 'INC-DO-019', title: 'Kaniko Build Error: Layer Not Found', priority: 'Low', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T17:30:00Z', system: 'Kaniko', role: 'DevOps', description: 'Base image layer missing.', logs: [{ timestamp: '17:30:05', level: 'error', message: 'error building image' }], timeline: [{ id: '1', timestamp: '17:30:00', action: 'Incident Created', user: 'Kaniko' }] },
 
   // App Support (AS) - 19 Incidents
-  { id: 'INC-AS-001', title: '403 Forbidden on Login', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T18:00:00Z', system: 'Portal Auth', role: 'Application Support Engineer', description: 'Users cannot log in.', logs: [{ timestamp: '18:00:05', level: 'error', message: '403 Forbidden' }], timeline: [{ id: '1', timestamp: '18:00:00', action: 'Incident Created', user: 'Sentry' }] },
-  { id: 'INC-AS-002', title: '500 Internal Server Error: Checkout', priority: 'Critical', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T18:15:00Z', system: 'Checkout Service', role: 'Application Support Engineer', description: 'Payments failing.', logs: [{ timestamp: '18:15:10', level: 'error', message: 'NullPointerException' }], timeline: [{ id: '1', timestamp: '18:15:00', action: 'Incident Created', user: 'Sentry' }] },
-  { id: 'INC-AS-003', title: '502 Bad Gateway: API', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T18:30:00Z', system: 'Nginx', role: 'Application Support Engineer', description: 'Backend service unreachable.', logs: [{ timestamp: '18:30:05', level: 'error', message: '502 Bad Gateway' }], timeline: [{ id: '1', timestamp: '18:30:00', action: 'Incident Created', user: 'Nginx' }] },
+  { id: 'INC-AS-001', title: '403 Forbidden on Login', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T18:00:00Z', system: 'Portal Auth', role: 'Application Support Engineer', tutorialId: 'TUT-039', description: 'Users cannot log in.', logs: [{ timestamp: '18:00:05', level: 'error', message: '403 Forbidden' }], timeline: [{ id: '1', timestamp: '18:00:00', action: 'Incident Created', user: 'Sentry' }] },
+  { id: 'INC-AS-002', title: '500 Internal Server Error: Checkout', priority: 'Critical', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T18:15:00Z', system: 'Checkout Service', role: 'Application Support Engineer', tutorialId: 'TUT-040', description: 'Payments failing.', logs: [{ timestamp: '18:15:10', level: 'error', message: 'NullPointerException' }], timeline: [{ id: '1', timestamp: '18:15:00', action: 'Incident Created', user: 'Sentry' }] },
+  { id: 'INC-AS-003', title: '502 Bad Gateway: API', priority: 'High', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T18:30:00Z', system: 'Nginx', role: 'Application Support Engineer', tutorialId: 'TUT-041', description: 'Backend service unreachable.', logs: [{ timestamp: '18:30:05', level: 'error', message: '502 Bad Gateway' }], timeline: [{ id: '1', timestamp: '18:30:00', action: 'Incident Created', user: 'Nginx' }] },
   { id: 'INC-AS-004', title: '504 Gateway Timeout: Reports', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T18:45:00Z', system: 'Reporting Service', role: 'Application Support Engineer', description: 'Report generation timing out.', logs: [{ timestamp: '18:45:10', level: 'error', message: '504 Gateway Timeout' }], timeline: [{ id: '1', timestamp: '18:45:00', action: 'Incident Created', user: 'Nginx' }] },
   { id: 'INC-AS-005', title: '404 Not Found: Static Assets', priority: 'Low', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T19:00:00Z', system: 'CDN', role: 'Application Support Engineer', description: 'Images not loading.', logs: [{ timestamp: '19:00:05', level: 'warn', message: '404 Not Found' }], timeline: [{ id: '1', timestamp: '19:00:00', action: 'Incident Created', user: 'Browser' }] },
   { id: 'INC-AS-006', title: 'High Latency in Search', priority: 'Medium', status: 'Open', assignee: 'Unassigned', createdAt: '2024-04-14T19:15:00Z', system: 'Search Service', role: 'Application Support Engineer', description: 'Search results taking > 5s.', logs: [{ timestamp: '19:15:10', level: 'warn', message: 'Response time: 5200ms' }], timeline: [{ id: '1', timestamp: '19:15:00', action: 'Incident Created', user: 'New Relic' }] },
@@ -190,4 +190,221 @@ export const portalCompanies = [
   { id: 4, nome: 'Titan Roasters', morada: 'Praceta do Progresso, 31, Braga', nib: 'PT50 1013 1014 1015 1016 6', data_inicio: '2022-04-01', data_fim: null },
   { id: 5, nome: 'Orion Extract', morada: 'Rua da Ciência, 123, Aveiro', nib: 'PT50 1017 1018 1019 1020 8', data_inicio: '2023-01-10', data_fim: null },
   { id: 6, nome: 'Nova Steam Integration', morada: 'Travessa da Indústria, 45, Évora', nib: 'PT50 1021 1022 1023 1024 0', data_inicio: '2023-06-15', data_fim: null },
+];
+
+export const toolScenarios: Record<string, ToolScenario[]> = {
+  'Apache Server': [
+    { title: 'Otimização de Cache', description: 'Configuração de mod_cache para reduzir carga no backend.', metric: 'Hit Rate', value: '85%' },
+    { title: 'Prevenção de DoS', description: 'Ajuste de mod_evasive para bloquear IPs suspeitos.', metric: 'IPs Bloqueados', value: '12' },
+    { title: 'Migração SSL', description: 'Atualização de certificados para TLS 1.3.', metric: 'Segurança', value: 'A+' },
+    { title: 'Balanceamento de Carga', description: 'Configuração de mod_proxy_balancer para 3 nós.', metric: 'Disponibilidade', value: '99.99%' },
+    { title: 'Compressão Gzip', description: 'Ativação de mod_deflate para reduzir tráfego.', metric: 'Redução de Dados', value: '60%' }
+  ],
+  'Ansible': [
+    { title: 'Patching de Segurança', description: 'Aplicação de patches críticos em 50 servidores Linux.', metric: 'Servidores Atualizados', value: '50/50' },
+    { title: 'Provisionamento de DB', description: 'Automação da instalação de PostgreSQL com PostGIS.', metric: 'Tempo de Setup', value: '4m 30s' },
+    { title: 'Hardening de OS', description: 'Aplicação de regras CIS Benchmark em instâncias EC2.', metric: 'Compliance', value: '98%' },
+    { title: 'Gestão de Secrets', description: 'Integração com HashiCorp Vault para gestão de chaves.', metric: 'Secrets Rodados', value: '124' },
+    { title: 'Auto-healing', description: 'Playbook para reiniciar serviços falhados automaticamente.', metric: 'Downtime Evitado', value: '2h' }
+  ],
+  'Terraform': [
+    { title: 'Infraestrutura Multi-Region', description: 'Replicação de recursos entre us-east-1 e eu-west-1.', metric: 'Latência Global', value: '-30%' },
+    { title: 'Cost Optimization', description: 'Identificação e remoção de recursos não utilizados.', metric: 'Poupança Mensal', value: '$450' },
+    { title: 'Kubernetes Cluster (EKS)', description: 'Provisionamento de cluster EKS com Managed Node Groups.', metric: 'Nós Ativos', value: '6' },
+    { title: 'VPC Peering', description: 'Configuração de peering entre VPC de Prod e Shared Services.', metric: 'Conectividade', value: 'OK' },
+    { title: 'Drift Detection', description: 'Monitorização de alterações manuais na infraestrutura.', metric: 'Drifts Detetados', value: '3' }
+  ],
+  'Docker': [
+    { title: 'Otimização de Imagem', description: 'Redução de tamanho de imagem usando multi-stage builds.', metric: 'Tamanho Final', value: '45MB' },
+    { title: 'Segurança de Imagem', description: 'Scan de vulnerabilidades com Trivy.', metric: 'Vulnerabilidades', value: '0' },
+    { title: 'Orquestração Local', description: 'Setup de ambiente de dev complexo com Docker Compose.', metric: 'Serviços', value: '8' },
+    { title: 'Resource Limits', description: 'Ajuste de limites de CPU e Memória para containers.', metric: 'Estabilidade', value: 'Alta' },
+    { title: 'Persistent Storage', description: 'Configuração de volumes externos para base de dados.', metric: 'Data Persistence', value: 'Garantida' }
+  ],
+  'AWS': [
+    { title: 'Auto Scaling Group', description: 'Configuração de escalabilidade baseada em pedidos/segundo.', metric: 'Max Instances', value: '10' },
+    { title: 'CloudFront CDN', description: 'Distribuição de conteúdo estático globalmente.', metric: 'TTFB', value: '45ms' },
+    { title: 'Lambda Serverless', description: 'Processamento de imagens via triggers de S3.', metric: 'Execuções/mês', value: '1.2M' },
+    { title: 'Route53 Failover', description: 'Configuração de DNS failover para região secundária.', metric: 'SLA', value: '99.99%' },
+    { title: 'IAM Least Privilege', description: 'Revisão de permissões para utilizadores e roles.', metric: 'Risco', value: 'Baixo' }
+  ],
+  'Prometheus': [
+    { title: 'Custom Metrics', description: 'Exposição de métricas de negócio via SDK.', metric: 'Métricas Ativas', value: '450' },
+    { title: 'Alertmanager Setup', description: 'Configuração de alertas para Slack e PagerDuty.', metric: 'Alertas Ativos', value: '12' },
+    { title: 'Long-term Storage', description: 'Integração com Thanos para retenção histórica.', metric: 'Retenção', value: '1 Ano' },
+    { title: 'Node Exporter', description: 'Monitorização de hardware em servidores bare-metal.', metric: 'Hosts', value: '25' },
+    { title: 'Blackbox Monitoring', description: 'Verificação de endpoints externos via HTTP probes.', metric: 'Uptime', value: '100%' }
+  ],
+  'Grafana': [
+    { title: 'Executive Dashboard', description: 'Visualização de KPIs de alto nível para gestão.', metric: 'Visualizações', value: '1.5k' },
+    { title: 'Log Aggregation', description: 'Visualização de logs via Loki no Grafana.', metric: 'Logs/seg', value: '450' },
+    { title: 'Tracing Integration', description: 'Visualização de traces distribuídos via Tempo.', metric: 'Span Count', value: '12M' },
+    { title: 'Alert Visualization', description: 'Painel dedicado para estado de alertas globais.', metric: 'Incidentes', value: '2' },
+    { title: 'Variable Dashboards', description: 'Templates dinâmicos para múltiplos ambientes.', metric: 'Ambientes', value: '4' }
+  ],
+  'Soap UI': [
+    { title: 'Load Testing', description: 'Simulação de 500 utilizadores simultâneos em API SOAP.', metric: 'TPS', value: '120' },
+    { title: 'Security Scan', description: 'Teste de vulnerabilidades comuns em XML (XXE).', metric: 'Falhas', value: '0' },
+    { title: 'Data-driven Testing', description: 'Uso de ficheiros CSV para alimentar casos de teste.', metric: 'Test Cases', value: '150' },
+    { title: 'Mock Services', description: 'Criação de mocks para APIs de terceiros indisponíveis.', metric: 'Disponibilidade', value: '100%' },
+    { title: 'Assertion Logic', description: 'Validação complexa de esquemas XSD em respostas.', metric: 'Pass Rate', value: '99%' }
+  ],
+  'Bonita BPM': [
+    { title: 'Workflow Optimization', description: 'Redução de passos manuais em processo de compras.', metric: 'Lead Time', value: '-40%' },
+    { title: 'User Task Portal', description: 'Customização de formulários para utilizadores finais.', metric: 'UX Score', value: '4.8/5' },
+    { title: 'API Integration', description: 'Conexão de processos com ERP SAP via REST.', metric: 'Sync Rate', value: '100%' },
+    { title: 'Process Mining', description: 'Análise de gargalos em processos históricos.', metric: 'Gargalos', value: 'Identificados' },
+    { title: 'Mobile Forms', description: 'Adaptação de tarefas para dispositivos móveis.', metric: 'Acessibilidade', value: 'OK' }
+  ],
+  'SAP ERP': [
+    { title: 'Inventory Reconciliation', description: 'Sincronização de stock físico com sistema SAP.', metric: 'Diferença', value: '0.01%' },
+    { title: 'Order-to-Cash', description: 'Monitorização do ciclo completo de venda.', metric: 'Ciclo Médio', value: '2 Dias' },
+    { title: 'Master Data Management', description: 'Limpeza e padronização de dados de fornecedores.', metric: 'Qualidade', value: '95%' },
+    { title: 'Financial Closing', description: 'Aceleração do fecho mensal via automação.', metric: 'Tempo de Fecho', value: '3 Dias' },
+    { title: 'Warehouse Management', description: 'Otimização de rotas de picking no armazém.', metric: 'Eficiência', value: '+25%' }
+  ],
+  'CI/CD Pipeline': [
+    { title: 'Blue-Green Deployment', description: 'Implementação de estratégia zero-downtime.', metric: 'Downtime', value: '0s' },
+    { title: 'Canary Releases', description: 'Rollout gradual para 5% dos utilizadores.', metric: 'Erro Rate', value: '0.01%' },
+    { title: 'Security Gate', description: 'Bloqueio de builds com vulnerabilidades críticas.', metric: 'Builds Bloqueadas', value: '4' },
+    { title: 'Artifact Management', description: 'Gestão de versões em Nexus/Artifactory.', metric: 'Storage', value: '1.2TB' },
+    { title: 'Pipeline as Code', description: 'Migração de jobs manuais para Jenkinsfile.', metric: 'Manutenibilidade', value: 'Alta' }
+  ],
+  'Database': [
+    { title: 'Otimização de Queries', description: 'Análise de slow queries em ambiente de produção.', metric: 'Tempo Médio', value: '150ms' },
+    { title: 'Replicação Master-Slave', description: 'Configuração de réplicas de leitura para escalabilidade.', metric: 'Lag de Replicação', value: '2s' },
+    { title: 'Backup Incremental', description: 'Implementação de WAL archiving para Point-in-Time Recovery.', metric: 'RPO', value: '5 min' },
+    { title: 'Particionamento de Tabelas', description: 'Divisão de tabelas históricas por mês.', metric: 'Performance', value: '+40%' },
+    { title: 'Segurança de Dados', description: 'Implementação de encriptação at-rest (TDE).', metric: 'Compliance', value: 'GDPR OK' }
+  ],
+  'Terminal': [
+    { title: 'Automação Bash', description: 'Script para limpeza automática de logs antigos.', metric: 'Espaço Recuperado', value: '50GB' },
+    { title: 'Hardening de SSH', description: 'Desativação de login root e mudança de porta.', metric: 'Tentativas Falhadas', value: '-90%' },
+    { title: 'Monitorização de Processos', description: 'Uso de htop e iotop para identificar gargalos.', metric: 'CPU Load', value: '0.45' },
+    { title: 'Gestão de Utilizadores', description: 'Configuração de sudoers com privilégios mínimos.', metric: 'Utilizadores', value: '15' },
+    { title: 'Análise de Rede', description: 'Uso de tcpdump para diagnosticar latência.', metric: 'Pacotes Analisados', value: '1.2M' }
+  ]
+};
+
+export const knowledgeQuestions: KnowledgeQuestion[] = [
+  {
+    id: 'Q1',
+    role: 'Cloud Engineer',
+    text: 'O que faria se um bucket S3 privado fosse detetado com acesso público?',
+    options: [
+      'Ignorar se não houver dados sensíveis.',
+      'Ativar o "Block Public Access" ao nível da conta ou bucket imediatamente.',
+      'Criar um novo bucket e mover os dados.'
+    ],
+    correctAnswer: 1,
+    explanation: 'A segurança deve ser a prioridade. Ativar o bloqueio de acesso público é a forma mais rápida de mitigar o risco.'
+  },
+  {
+    id: 'Q2',
+    role: 'Cloud Engineer',
+    text: 'Como resolveria um problema de latência crescente numa réplica de leitura RDS?',
+    options: [
+      'Reiniciar a instância master.',
+      'Aumentar o tamanho da instância da réplica ou verificar IOPS.',
+      'Apagar a réplica e criar uma nova.'
+    ],
+    correctAnswer: 1,
+    explanation: 'O lag de replicação é frequentemente causado por falta de recursos (CPU/IOPS) na réplica para processar as alterações do master.'
+  },
+  {
+    id: 'Q3',
+    role: 'Application Support Engineer',
+    text: 'Um utilizador reporta erro 403 Forbidden ao tentar aceder ao portal. Qual o primeiro passo?',
+    options: [
+      'Reiniciar o servidor web.',
+      'Verificar os logs de acesso e erro para identificar a regra de segurança ou permissão negada.',
+      'Pedir ao utilizador para limpar a cache do browser.'
+    ],
+    correctAnswer: 1,
+    explanation: 'Logs são a fonte da verdade. O erro 403 indica que o servidor entendeu o pedido mas recusa-se a autorizá-lo.'
+  },
+  {
+    id: 'Q4',
+    role: 'Application Support Engineer',
+    text: 'O que indica um erro 504 Gateway Timeout num ambiente com Nginx e um Backend Node.js?',
+    options: [
+      'O Nginx está desligado.',
+      'O Backend demorou demasiado tempo a responder ao Nginx.',
+      'A base de dados está corrompida.'
+    ],
+    correctAnswer: 1,
+    explanation: '504 significa que o servidor (gateway) não recebeu uma resposta atempada do servidor upstream.'
+  },
+  {
+    id: 'Q5',
+    role: 'Cloud Engineer',
+    text: 'Qual a melhor estratégia para garantir alta disponibilidade numa aplicação web na AWS?',
+    options: [
+      'Usar uma única instância EC2 muito potente.',
+      'Distribuir instâncias por múltiplas Zonas de Disponibilidade (AZs) atrás de um Load Balancer.',
+      'Fazer backups diários.'
+    ],
+    correctAnswer: 1,
+    explanation: 'Multi-AZ é o padrão para alta disponibilidade, garantindo que a falha de um datacenter não derrube a aplicação.'
+  },
+  {
+    id: 'Q6',
+    role: 'Cloud Engineer',
+    text: 'Como implementaria Infrastructure as Code (IaC) para garantir consistência entre ambientes?',
+    options: [
+      'Usar scripts Bash manuais.',
+      'Utilizar Terraform ou CloudFormation com controlo de versões (Git).',
+      'Configurar tudo via consola AWS e tirar snapshots.'
+    ],
+    correctAnswer: 1,
+    explanation: 'IaC permite versionamento, auditoria e replicação exata de infraestrutura.'
+  },
+  {
+    id: 'Q7',
+    role: 'Cloud Engineer',
+    text: 'O que é um "Blue/Green Deployment"?',
+    options: [
+      'Um método de colorir servidores para identificação.',
+      'Uma técnica de deployment que mantém dois ambientes idênticos, um ativo e outro inativo.',
+      'Um tipo de monitorização visual.'
+    ],
+    correctAnswer: 1,
+    explanation: 'Blue/Green reduz o downtime e o risco ao permitir testar a nova versão num ambiente isolado antes de virar o tráfego.'
+  },
+  {
+    id: 'Q8',
+    role: 'Application Support Engineer',
+    text: 'Como diagnosticaria uma lentidão súbita numa API REST?',
+    options: [
+      'Verificar o tempo de resposta da base de dados e latência de rede.',
+      'Aumentar o timeout do cliente.',
+      'Reinstalar o servidor.'
+    ],
+    correctAnswer: 0,
+    explanation: 'Lentidão em APIs é geralmente causada por queries lentas ou dependências externas demoradas.'
+  },
+  {
+    id: 'Q9',
+    role: 'Application Support Engineer',
+    text: 'O que deve ser feito ao encontrar um erro de "Out of Memory" nos logs de uma aplicação Java?',
+    options: [
+      'Ignorar, pois o Garbage Collector vai resolver.',
+      'Analisar o Heap Dump e ajustar os parâmetros Xmx/Xms.',
+      'Reiniciar o servidor a cada hora.'
+    ],
+    correctAnswer: 1,
+    explanation: 'O erro indica que a JVM não tem memória suficiente. Analisar o heap dump ajuda a encontrar memory leaks.'
+  },
+  {
+    id: 'Q10',
+    role: 'Application Support Engineer',
+    text: 'Qual a importância de um SLA (Service Level Agreement)?',
+    options: [
+      'É apenas um documento legal sem impacto técnico.',
+      'Define o nível de serviço esperado e as métricas de disponibilidade (ex: 99.9%).',
+      'Serve para culpar a equipa de desenvolvimento.'
+    ],
+    correctAnswer: 1,
+    explanation: 'O SLA estabelece as expectativas de performance e disponibilidade entre o fornecedor e o cliente.'
+  }
 ];
